@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Add Task - Manufacturing Progress Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Add New Task</h1>
+        <p class="text-muted mb-0">Create a manufacturing progress item.</p>
+    </div>
+</div>
+
+<form class="panel" method="post">
+    {% include "_task_form.html" %}
+    <div class="mt-4 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Save Task</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('task_list') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,50 @@
+<div class="row g-3">
+    <div class="col-md-8">
+        <label class="form-label" for="title">Title</label>
+        <input class="form-control" id="title" name="title" required value="{{ task.title if task else '' }}">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="owner">Owner</label>
+        <input class="form-control" id="owner" name="owner" required value="{{ task.owner if task else '' }}">
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="category">Category</label>
+        <select class="form-select" id="category" name="category" required>
+            {% for category in categories %}
+                <option value="{{ category }}" {% if task and task.category == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="status">Status</label>
+        <select class="form-select" id="status" name="status" required>
+            {% for status in statuses %}
+                <option value="{{ status }}" {% if task and task.status == status %}selected{% endif %}>{{ status }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="priority">Priority</label>
+        <select class="form-select" id="priority" name="priority" required>
+            {% for priority in priorities %}
+                <option value="{{ priority }}" {% if task and task.priority == priority %}selected{% endif %}>{{ priority }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label" for="due_date">Due Date</label>
+        <input class="form-control" id="due_date" name="due_date" type="date" required value="{{ task.due_date if task else today }}">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label" for="last_updated">Last Updated</label>
+        <input class="form-control" id="last_updated" name="last_updated" type="date" required value="{{ task.last_updated if task else today }}">
+    </div>
+    <div class="col-12">
+        <label class="form-label" for="progress_note">Progress Note</label>
+        <textarea class="form-control" id="progress_note" name="progress_note" rows="4" required>{{ task.progress_note if task else '' }}</textarea>
+    </div>
+    <div class="col-12">
+        <label class="form-label" for="risk">Risk</label>
+        <textarea class="form-control" id="risk" name="risk" rows="3" required>{{ task.risk if task else '' }}</textarea>
+    </div>
+</div>

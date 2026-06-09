@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Weekly Report - Manufacturing Progress Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Weekly Report</h1>
+        <p class="text-muted mb-0">Business-style summary generated from the current task list.</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('report') }}">Generate Weekly Report</a>
+</div>
+
+<section class="panel">
+    <pre class="report-box">{{ report_text }}</pre>
+</section>
+
+<div class="row g-3 mt-1">
+    <div class="col-md-4"><div class="metric-card"><span>Active</span><strong>{{ active_tasks|length }}</strong></div></div>
+    <div class="col-md-4"><div class="metric-card warning"><span>Blocked</span><strong>{{ blocked_tasks|length }}</strong></div></div>
+    <div class="col-md-4"><div class="metric-card danger"><span>Overdue</span><strong>{{ overdue_tasks|length }}</strong></div></div>
+</div>
+
+<section class="panel mt-4">
+    <h2>High/Urgent Priority Tasks</h2>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Owner</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Risk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in high_priority_tasks %}
+                    <tr>
+                        <td><a href="{{ url_for('task_detail', task_id=task.id) }}">{{ task.title }}</a></td>
+                        <td>{{ task.owner }}</td>
+                        <td><span class="status-pill">{{ task.status }}</span></td>
+                        <td><span class="priority-pill priority-{{ task.priority|lower }}">{{ task.priority }}</span></td>
+                        <td>{{ task.risk }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

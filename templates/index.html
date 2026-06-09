@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Manufacturing Progress Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p class="text-muted mb-0">Manufacturing task progress at a glance.</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('add_task') }}">Add New Task</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="metric-card">
+            <span>Total Tasks</span>
+            <strong>{{ total_tasks }}</strong>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card danger">
+            <span>Overdue</span>
+            <strong>{{ overdue_tasks|length }}</strong>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card warning">
+            <span>Blocked</span>
+            <strong>{{ status_counts.get("Blocked", 0) }}</strong>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card supplier">
+            <span>Waiting Supplier</span>
+            <strong>{{ status_counts.get("Waiting for Supplier", 0) }}</strong>
+        </div>
+    </div>
+</div>
+
+<section class="panel assistant-panel mb-4" id="assistant">
+    <div class="assistant-header">
+        <div>
+            <h2>Progress Assistant</h2>
+            <p class="text-muted mb-0">Ask about manufacturing task status, risks, overdue items, suppliers, audit, or SAP/BOM work.</p>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('query') }}">Open Full Query Page</a>
+    </div>
+
+    <form method="post" action="{{ url_for('index') }}#assistant">
+        <label class="form-label" for="dashboard-query">Question</label>
+        <div class="input-group">
+            <input class="form-control" id="dashboard-query" name="query" value="{{ query_text }}" placeholder="What is the status of film rack purchase?">
+            <button class="btn btn-primary" type="submit">Ask</button>
+        </div>
+        <div class="query-examples">
+            <span>Examples:</span>
+            <code>Show overdue tasks</code>
+            <code>膜架采购现在到哪了？</code>
+            <code>客户审核准备进度怎么样？</code>
+        </div>
+    </form>
+
+    {% if query_text %}
+        <div class="conversation-thread">
+            <div class="chat-message user-message">
+                <span>You</span>
+                <p>{{ query_text }}</p>
+            </div>
+            <div class="chat-message assistant-message">
+                <span>Assistant</span>
+                {% if summaries %}
+                    {% for summary in summaries %}
+                        <p>{{ summary }}</p>
+                    {% endfor %}
+                {% else %}
+                    <p>No matching tasks found. Try a title, owner, status, category, or risk keyword.</p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <section class="panel">
+            <h2>Status Counts</h2>
+            <div class="list-group list-group-flush">
+                {% for status, count in status_counts.items() %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>{{ status }}</span>
+                        <span class="badge text-bg-secondary">{{ count }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+    <div class="col-lg-7">
+        <section class="panel">
+            <h2>Recently Updated</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Status</th>
+                            <th>Owner</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in recent_tasks %}
+                            <tr>
+                                <td><a href="{{ url_for('task_detail', task_id=task.id) }}">{{ task.title }}</a></td>
+                                <td><span class="status-pill">{{ task.status }}</span></td>
+                                <td>{{ task.owner }}</td>
+                                <td>{{ task.last_updated }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+<section class="panel mt-4">
+    <h2>Overdue Tasks</h2>
+    {% if overdue_tasks %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Owner</th>
+                        <th>Status</th>
+                        <th>Due Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in overdue_tasks %}
+                        <tr>
+                            <td><a href="{{ url_for('task_detail', task_id=task.id) }}">{{ task.title }}</a></td>
+                            <td>{{ task.owner }}</td>
+                            <td><span class="status-pill">{{ task.status }}</span></td>
+                            <td class="text-danger fw-semibold">{{ task.due_date }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="text-muted mb-0">No overdue tasks.</p>
+    {% endif %}
+</section>
+{% endblock %}

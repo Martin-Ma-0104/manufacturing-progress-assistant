@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Query - Manufacturing Progress Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Natural Language Query</h1>
+        <p class="text-muted mb-0">Ask for task status using simple keywords.</p>
+    </div>
+</div>
+
+<form class="panel mb-4" method="post">
+    <label class="form-label" for="query">Question</label>
+    <div class="input-group">
+        <input class="form-control" id="query" name="query" value="{{ query_text }}" placeholder="What tasks are waiting for supplier?">
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+    <div class="query-examples">
+        <span>Examples:</span>
+        <code>Show overdue tasks</code>
+        <code>膜架采购现在到哪了？</code>
+        <code>客户审核准备进度怎么样？</code>
+    </div>
+</form>
+
+{% if query_text %}
+    <section class="panel">
+        <h2>Assistant Summary</h2>
+        {% if summaries %}
+            {% for summary in summaries %}
+                <p class="summary-line">{{ summary }}</p>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted mb-0">No matching tasks found. Try a title, owner, status, category, or risk keyword.</p>
+        {% endif %}
+    </section>
+{% endif %}
+{% endblock %}

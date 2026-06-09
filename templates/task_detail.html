@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Task Detail - Manufacturing Progress Assistant{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>{{ task.title }}</h1>
+        <p class="text-muted mb-0">{{ task.category }} · Owner: {{ task.owner }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('task_list') }}">Back</a>
+        <a class="btn btn-primary" href="{{ url_for('edit_task', task_id=task.id) }}">Edit Task</a>
+    </div>
+</div>
+
+<section class="panel">
+    <dl class="detail-grid">
+        <div>
+            <dt>Status</dt>
+            <dd><span class="status-pill">{{ task.status }}</span></dd>
+        </div>
+        <div>
+            <dt>Priority</dt>
+            <dd><span class="priority-pill priority-{{ task.priority|lower }}">{{ task.priority }}</span></dd>
+        </div>
+        <div>
+            <dt>Due Date</dt>
+            <dd class="{% if is_overdue(task) %}text-danger fw-semibold{% endif %}">{{ task.due_date }}</dd>
+        </div>
+        <div>
+            <dt>Last Updated</dt>
+            <dd>{{ task.last_updated }}</dd>
+        </div>
+        <div class="wide">
+            <dt>Progress Note</dt>
+            <dd>{{ task.progress_note }}</dd>
+        </div>
+        <div class="wide">
+            <dt>Risk</dt>
+            <dd>{{ task.risk }}</dd>
+        </div>
+    </dl>
+</section>
+{% endblock %}
