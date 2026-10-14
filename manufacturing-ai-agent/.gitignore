@@ -1,0 +1,13 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+manufacturing.db
+manufacturing.db-*
+.env
+.vscode/
+
+# Local production records, source images, and generated reports
+local_data/
+reports/
