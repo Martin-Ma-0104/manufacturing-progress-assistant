@@ -3,7 +3,7 @@ import argparse
 import json
 import math
 import sqlite3
-from contextlib import closing
+from contextlib import closing, nullcontext
 from datetime import date
 from pathlib import Path
 
@@ -65,7 +65,7 @@ def validate(record):
         raise ValueError('Reported yield must be between 0 and 100, or null.')
 
 
-def import_records(records, connection):
+def import_records(records, connection, *, manage_transaction=True):
     """Same key + same values is a no-op; conflicting values require explicit correction."""
     if not isinstance(records, list) or not records:
         raise ValueError('Input must be a nonempty JSON list of records.')
@@ -73,7 +73,7 @@ def import_records(records, connection):
         validate(record)
     connection.execute(SCHEMA)
     added = 0
-    with connection:
+    with connection if manage_transaction else nullcontext():
         for record in records:
             values = tuple(record[field] for field in FIELDS)
             existing = connection.execute(

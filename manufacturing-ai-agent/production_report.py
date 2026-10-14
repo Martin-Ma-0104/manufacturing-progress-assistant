@@ -1,4 +1,4 @@
-"""Generate a standalone, offline HTML report from daily SQLite records."""
+"""Offline production Dashboard report; calculations shared with the web app."""
 import argparse
 import html
 import sqlite3
@@ -7,10 +7,10 @@ from pathlib import Path
 
 from database import DB_PATH, get_connection
 from production import get_records
-
-
-def percent(numerator, denominator):
-    return f'{numerator / denominator * 100:.1f}%' if denominator else '—'
+from production_dashboard import (
+    SHIFT_LABELS, aggregate_machines, coverage_text, detail_records, filter_records,
+    percent, summarize,
+)
 
 
 def total(rows, key):
@@ -18,73 +18,88 @@ def total(rows, key):
 
 
 def chart(rows, fields, labels, unit):
-    """Grouped horizontal SVG bars; counts and areas always use separate scales."""
+    """Machine totals, with outside legends and room for long numerical labels."""
     maximum = max((row[field] for row in rows for field in fields), default=0) or 1
-    height = 45 + len(rows) * 66
+    height = 24 + max(len(rows), 1) * 72
     parts = [f'<svg viewBox="0 0 960 {height}" role="img" aria-label="{html.escape(" / ".join(labels))}">']
-    colors = ('#9caec2', '#007f86')
-    for i, label in enumerate(labels):
-        parts.append(f'<rect x="{180 + i * 310}" y="5" width="12" height="12" fill="{colors[i]}"/>'
-                     f'<text x="{200 + i * 310}" y="16">{html.escape(label)} ({unit})</text>')
+    colors = ('#94a3b8', '#2563a6')
     for index, row in enumerate(rows):
-        y = 42 + index * 66
-        name = f"{row['machine_id']} · {'白班' if row['shift'] == 'Day' else '夜班'}"
-        parts.append(f'<text x="10" y="{y + 20}">{html.escape(name)}</text>')
+        y = 16 + index * 72
+        parts.append(f'<text x="16" y="{y+26}">{html.escape(row["machine_id"])}</text>')
         for j, field in enumerate(fields):
-            width = row[field] / maximum * 590
+            width = row[field] / maximum * 610
             value = f'{row[field]:,.1f}' if unit == 'm²' else f'{row[field]:,}'
-            parts.append(f'<rect x="180" y="{y + j * 24}" width="{width:.2f}" height="18" rx="3" fill="{colors[j]}"/>'
-                         f'<text x="{190 + width:.2f}" y="{y + j * 24 + 14}">{value}</text>')
-    return ''.join(parts) + '</svg>'
+            parts.append(f'<rect x="110" y="{y+j*27}" width="{width:.2f}" height="18" rx="3" fill="{colors[j]}"/>'
+                         f'<text x="{122+width:.2f}" y="{y+j*27+14}">{value} {unit}</text>')
+    parts.append('</svg>')
+    legend = '<div class="legend">' + ''.join(
+        f'<span><i style="background:{colors[i]}"></i>{html.escape(label)}（{unit}）</span>'
+        for i, label in enumerate(labels)) + '</div>'
+    return legend + ''.join(parts)
 
 
-def render_report(rows, day, shift=None):
-    if shift not in (None, 'Day', 'Night'):
-        raise ValueError('Unknown shift.')
-    if shift is not None:
-        rows = [row for row in rows if row['shift'] == shift]
-    shift_label = {None: '白班 / 夜班', 'Day': '白班', 'Night': '夜班'}[shift]
-    groups = [(shift_label, rows)] if shift else [
-        ('全天', rows), ('白班', [r for r in rows if r['shift'] == 'Day']),
-        ('夜班', [r for r in rows if r['shift'] == 'Night'])]
-    cards = []
-    for label, subset in groups:
-        if not subset:
-            continue
-        p, i, q, a, qa = (total(subset, field) for field in (
-            'planned_rolls', 'input_rolls', 'qualified_rolls', 'actual_output_m2', 'qualified_output_m2'))
-        cards.append(f'<article><h2>{label}</h2><strong>{qa:,.1f} m²</strong><p>合格产出</p>'
-                     f'<p>计划 {p} 卷 · 投入 {i} 卷 · 合格成品 {q} 卷</p>'
-                     f'<p>实际产出 {a:,.1f} m²</p><p>投入计划达成率 <b>{percent(i, p)}</b>'
-                     f' · 面积合格率 <b>{percent(qa, a)}</b></p></article>')
-    body = []
-    for row in rows:
-        values = [row['machine_id'], '白班' if row['shift'] == 'Day' else '夜班', row['product'],
-                  row['planned_rolls'], row['input_rolls'], row['qualified_rolls'],
-                  f"{row['actual_output_m2']:,.1f}", f"{row['qualified_output_m2']:,.1f}",
-                  percent(row['input_rolls'], row['planned_rolls']),
-                  percent(row['qualified_output_m2'], row['actual_output_m2']),
-                  '—' if row['reported_yield_pct'] is None else f"{row['reported_yield_pct']:.1f}%"]
-        body.append('<tr>' + ''.join(f'<td>{html.escape(str(v))}</td>' for v in values) + '</tr>')
-    headings = ['设备', '班次', '产品', '计划卷', '投入卷', '合格卷', '实际 m²', '合格 m²', '投入达成率', '面积合格率', '原报表综收']
-    return f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(day)} 分切生产日报</title>
-<style>body{{font-family:system-ui,sans-serif;background:#f1f5f9;color:#173042;margin:0;padding:32px}}
-main{{max-width:1250px;margin:auto}}h1{{font-size:32px}}.cards{{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}}
-article,section{{background:white;border:1px solid #dde6ee;border-radius:12px;padding:22px;margin:18px 0}}strong{{font-size:30px;color:#007f86}}p,li{{line-height:1.7}}svg{{width:100%;height:auto}}svg text{{font:14px system-ui,sans-serif;fill:#173042}}
-.scroll{{overflow-x:auto}}table{{border-collapse:collapse;white-space:nowrap;width:100%;font-size:13px}}td,th{{padding:12px;text-align:right;border-bottom:1px solid #dde6ee}}th{{background:#edf4f6}}.note{{color:#536777}}@media print{{body{{padding:0}}section,article{{break-inside:avoid}}}}</style>
-<main><p class="note">MANUFACTURING · DAILY PRODUCTION</p><h1>{html.escape(day)} · 分切生产日报</h1>
-<p>{shift_label} · 来自本地 SQLite · {len(rows)} 条机器／班次／产品记录</p>
-<div class="cards">{''.join(cards)}</div>
-<section><h2>计划与实际投入</h2><p class="note">比较相同口径的投入卷数，避免将母卷与成品卷直接比较。</p>{chart(rows, ('planned_rolls','input_rolls'), ('计划投入','实际投入'), '卷')}</section>
-<section><h2>实际产出与合格产出</h2><p class="note">两项均为面积（m²）；条形差值仅表示未计入合格产出的面积，不直接认定为废料。</p>{chart(rows, ('actual_output_m2','qualified_output_m2'), ('实际产出','合格产出'), 'm²')}</section>
-<section><h2>生产明细</h2><div class="scroll"><table><thead><tr>{''.join(f'<th>{h}</th>' for h in headings)}</tr></thead><tbody>{''.join(body)}</tbody></table></div></section>
+STYLE = '''body{font-family:system-ui,sans-serif;background:#f4f7fb;color:#19344f;margin:0;padding:24px}
+main{max-width:1250px;margin:auto}h1{font-size:28px}h2{font-size:20px}p{line-height:1.7;color:#53677d}
+section,article{background:white;border:1px solid #dce5ee;border-radius:10px;padding:20px;margin:16px 0}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.cards article{margin:0}.cards strong{display:block;font-size:clamp(20px,2.3vw,30px);overflow-wrap:anywhere;margin:10px 0;color:#204d79}
+.legend{display:flex;flex-wrap:wrap;gap:12px 24px;margin:8px 0 20px;color:#53677d}.legend span{display:flex;align-items:center;gap:8px}.legend i{display:block;width:14px;height:14px;border-radius:2px}
+svg{width:100%;height:auto}svg text{font:15px system-ui;fill:#19344f}.scroll{overflow-x:auto}table{border-collapse:collapse;white-space:nowrap;width:100%;font-size:13px}td,th{padding:12px;text-align:right;border-bottom:1px solid #dde6ee}th{background:#edf3f8}summary{cursor:pointer;font-weight:600}small{line-height:1.5;color:#53677d}
+@media(max-width:850px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}body{padding:12px}}
+@media print{details>*,details table{display:block}section,article{break-inside:avoid}}
+'''
+
+
+def chart_document(content):
+    return f'<!doctype html><html lang="zh-CN"><meta charset="utf-8"><style>{STYLE}body{{padding:4px;background:white}}</style>{content}</html>'
+
+
+def detail_table(rows):
+    records = detail_records(rows)
+    if not records:
+        return '<p>暂无生产明细。</p>'
+    heads = ''.join(f'<th>{html.escape(k)}</th>' for k in records[0])
+    body = ''.join('<tr>' + ''.join(f'<td>{html.escape(str(v))}</td>' for v in r.values()) + '</tr>' for r in records)
+    return f'<div class="scroll"><table><thead><tr>{heads}</tr></thead><tbody>{body}</tbody></table></div>'
+
+
+def render_report(rows, day, shift=None, machine=None):
+    rows = filter_records(rows, shift, machine)
+    summary = summarize(rows)
+    machines = aggregate_machines(rows)
+    cards = [
+        ('合格产出面积', f"{summary['qualified_output_m2']:,.1f} m²" if rows else '—', '合格成品的产出面积'),
+        ('投入计划达成率', summary['attainment'], '投入卷数 ÷ 计划卷数'),
+        ('面积合格率', summary['qualification'], '合格面积 ÷ 实际面积'),
+        ('已记录设备数', f"{summary['machine_count']} 台", '按设备编号去重'),
+    ]
+    cards_html = ''.join(f'<article>{label}<strong>{value}</strong><small>{hint}</small></article>' for label,value,hint in cards)
+    auxiliary = (f"计划投入 {summary['planned_rolls']:,} 卷 · 实际投入 {summary['input_rolls']:,} 卷 · "
+                 f"合格成品 {summary['qualified_rolls']:,} 卷 · 实际产出 {summary['actual_output_m2']:,.1f} m²") if rows else '暂无数据'
+    shift_summaries = ''
+    if shift is None and rows:
+        lines = []
+        for recorded_shift in ('Day', 'Night'):
+            subset = filter_records(rows, recorded_shift)
+            if subset:
+                s = summarize(subset)
+                lines.append(f"{SHIFT_LABELS[recorded_shift]}：合格面积 {s['qualified_output_m2']:,.1f} m²，投入计划达成率 {s['attainment']}，面积合格率 {s['qualification']}")
+        shift_summaries = '<p>' + '<br>'.join(lines) + '</p>'
+    comparisons = (
+        '<section><h2>计划投入与实际投入</h2>' + chart(machines, ('planned_rolls','input_rolls'), ('计划投入','实际投入'), '卷') + '</section>'
+        '<section><h2>实际产出与合格产出</h2>' + chart(machines, ('actual_output_m2','qualified_output_m2'), ('实际产出','合格产出'), 'm²') + '</section>'
+    ) if rows else '<section><p>当前日期、班次及设备范围暂无生产记录。</p></section>'
+    return f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(day)} 生产 Dashboard</title><style>{STYLE}</style><main>
+<h1>Production Data Viewer Agent · {html.escape(day)}</h1>
+<p>{SHIFT_LABELS[shift]} · {html.escape(machine or '全部设备')} · {summary['record_count']} 条记录<br>{coverage_text(rows,shift)}</p>
+<div class="cards">{cards_html}</div><p>{auxiliary}</p>{shift_summaries}{comparisons}
+<section><details><summary>生产明细 · {len(rows)} 条记录</summary>{detail_table(rows)}</details></section>
 </main></html>'''
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--date', required=True, help='Production date YYYY-MM-DD')
+    parser.add_argument('--date', required=True)
     parser.add_argument('--output', type=Path)
     args = parser.parse_args()
     if not DB_PATH.is_file():

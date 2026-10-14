@@ -11,3 +11,8 @@ manufacturing.db-*
 # Local production records, source images, and generated reports
 local_data/
 reports/
+
+# Cloud secrets and alternate local database files
+.streamlit/secrets.toml
+*.db
+*.db-*

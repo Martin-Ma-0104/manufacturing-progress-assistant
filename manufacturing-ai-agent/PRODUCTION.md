@@ -62,7 +62,7 @@ actual output area. Unknown reported yield is `null`, not zero.
 For one day's data, the offline HTML report automatically generates two grouped
 bar charts: planned versus actual input rolls, and actual versus qualified output
 area. It includes day/night totals and all machine/product details. No CDN, web
-server or package installation is required. Many-day trends are future work.
+server or package installation is required. The web application also provides 7/30-day trends.
 
 - Input plan attainment = input rolls / planned rolls.
 - Area qualification rate = qualified output area / actual output area.
@@ -87,8 +87,8 @@ report for daily production details.
 ## Existing Streamlit web app
 
 The existing optional Streamlit app now has a **分切生产日报** sidebar page
-(default) and retains **订单分析**. Select an available production date to read
-current SQLite records, view the full report, or download its HTML. **刷新数据**
+(default) and retains **订单分析**. Use the calendar to select a production date, shift and machine, then view
+current SQLite records or download the filtered report. **刷新数据**
 reloads dates and records after another import. No report generation command is
 needed for the web view. This page does not upload or recognize photographs.
 
@@ -98,7 +98,8 @@ Run with the existing virtual environment (Streamlit is already installed there)
 .venv/bin/python -m streamlit run streamlit_app.py --server.address 127.0.0.1
 ```
 
-Then open http://localhost:8501 on this computer. This local app is separate from
+By default Streamlit uses port 8501. This project’s current local preview uses
+port 8502 (add `--server.port 8502` to the command). This local app is separate from
 the source factory reporting website shown in screenshots. The standard-library
 CLI remains usable without Streamlit.
 
@@ -120,3 +121,31 @@ date, shift and machine. Product-code differences alone never create a marker.
 The optional table contains `from_product`, `to_product`, and `confirmation_note`.
 Absent event tables or missing events produce no changeover markers. Events obey
 the selected date and shift filters; production quantities are unchanged.
+
+## PLAN-003 v1 Dashboard layout
+
+The daily page uses native Streamlit filters, metric cards and expandable details.
+`production_dashboard.py` owns pure filtering, ratios of sums, unique device counts,
+per-device totals, coverage descriptions and detail formatting. Both the web page
+and `production_report.py` use these functions. Device comparison bars aggregate
+selected shifts/products; original records remain available in the details.
+
+The first four indicators are qualified output area, input plan attainment,
+area qualification rate and recorded device count. Counts describe observed IDs,
+not running machines or utilization. Supporting counts/area and shift summaries
+remain visible. No-data areas and ratios show —, and recorded device count is 0.
+Coverage reports recorded Day/Night machines and their intersection only; it does
+not establish full-factory completeness or indicate downtime.
+
+Daily mode now includes linked machine trends after the comparisons. Its date is
+the inclusive trend end date, with a 7/30-day selector. Global date, shift and machine
+filters apply consistently; devices are selectable from historical observations,
+so a missing current-date observation does not remove a device from the selector.
+Standalone weekly/monthly modes remain supported. The single device selection
+also determines the comparison scale. Plan lines remain dashed; only confirmed
+changeovers are marked. Existing orange shift-coverage markers describe missing
+shift observations without assessing performance.
+
+`.streamlit/config.toml` defines the light blue-gray theme. No new packages were
+introduced; requirements.txt now records the already installed Streamlit version.
+New `test_dashboard.py` uses synthetic records and isolated databases only.

@@ -2,9 +2,10 @@
 
 ## Overview
 
-A manufacturing enterprise AI agent project, currently implementing a simple,
-extensible SQLite data foundation. Phase 1 uses Python 3 and its built-in
-`sqlite3` module only. No AI functionality or external services are implemented.
+Production Data Viewer Agent extends the original manufacturing data foundation
+with a local Streamlit Dashboard for daily production comparisons and machine
+trends. SQLite import and offline reports use Python standard-library modules.
+The web application uses Streamlit 1.65.0. No AI functionality is implemented.
 
 All manufacturing data in Phase 1 is simulated demonstration data.
 
@@ -83,7 +84,8 @@ python3 verify_db.py
 python3 main.py
 ```
 
-The virtual environment is optional. No package installation is necessary.
+The virtual environment is optional for the standard-library CLI scripts.
+For the web Dashboard, install the existing dependency declared in requirements.txt.
 The database is always stored beside `database.py`, regardless of the terminal's
 working directory. Initialize it before running the seed script; missing tables
 produce a clear setup message and a nonzero exit status.
@@ -115,3 +117,27 @@ by Git. Recreate the local database with `python3 init_db.py` followed by
 See [PRODUCTION.md](PRODUCTION.md) for local daily slitting records, JSON import,
 and offline comparison charts. The original Phase 1 seed data remains simulated.
 User-supplied production observations are stored separately and excluded from Git.
+
+## Production Dashboard
+
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m streamlit run streamlit_app.py --server.address 127.0.0.1 --server.port 8502
+```
+
+Open http://127.0.0.1:8502. Select **当日数据** to view the four key metrics,
+machine totals, linked 7/30-day trends and expandable raw details. Date, shift,
+machine and metric selections persist in the URL. Existing standalone trend modes
+and order analysis remain available. Download the current daily or trend report
+as HTML. Historical devices with no selected-date observation are shown as no
+data, not zero output. See PRODUCTION.md for metric and coverage definitions.
+
+Regression checks: `.venv/bin/python -B -m unittest test_production.py test_dashboard.py`.
+The CLI uses no third-party packages; installing requirements is needed only for
+the web application. A clone still needs separately retained local production data.
+
+## Private Cloud Demo
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for Community Cloud configuration, private
+viewer access, manual JSON import and recovery. `cloud_entry.py` is the hosted
+entrypoint. Local production data and cloud passwords are excluded from Git.

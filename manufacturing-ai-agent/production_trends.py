@@ -103,7 +103,7 @@ def render_trends(rows, end_date, days, metric='合格产出面积', shift=None,
             value = row[field]
             y = 230 - value / maximum * 192
             if previous:
-                svg.append(f'<line x1="{previous[0]}" y1="{previous[1]}" x2="{x}" y2="{y}" stroke="#07858a" stroke-width="2.5"/>')
+                svg.append(f'<line x1="{previous[0]}" y1="{previous[1]}" x2="{x}" y2="{y}" stroke="#2563a6" stroke-width="2.5"/>')
             if compare_plan:
                 planned = row['planned_rolls']
                 plan_y = 230 - planned / maximum * 192
@@ -114,7 +114,7 @@ def render_trends(rows, end_date, days, metric='合格产出面积', shift=None,
                     data_labels.append(f'<text class="point-label" x="{x}" y="{min(y, plan_y)-14}" text-anchor="{label_anchor}">计划 {planned:,.0f}</text>')
                 previous_plan = (x, plan_y)
             incomplete = shift is None and row['shift_count'] < 2
-            color = '#c47b15' if incomplete else '#07858a'
+            color = '#c47b15' if incomplete else '#2563a6'
             tip = f'{day} · {value:,.1f} {unit}' + (' · 仅有一个班次记录' if incomplete else '')
             svg.append(f'<circle cx="{x}" cy="{y}" r="5" fill="{color}"><title>{escape(tip)}</title></circle>')
             if show_label:
@@ -149,7 +149,7 @@ def render_trends(rows, end_date, days, metric='合格产出面积', shift=None,
     label = {None: '全部班次', 'Day': '白班', 'Night': '夜班'}[shift]
     return f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>分切机趋势 · {days} 天</title><style>
-body{{font-family:system-ui,sans-serif;background:#f1f5f9;color:#173042;padding:24px;margin:0}}main{{max-width:1250px;margin:auto}}section{{background:white;border:1px solid #dbe5ed;border-radius:12px;padding:24px;margin:20px 0}}svg{{width:100%;height:auto}}.legend{{display:flex;flex-wrap:wrap;gap:12px 28px;margin:12px 0 20px;color:#536777}}.legend span{{display:flex;align-items:center;gap:10px}}.legend i{{display:inline-block;width:32px;flex-shrink:0}}.actual-swatch{{border-top:3px solid #07858a}}.plan-swatch{{border-top:3px dashed #64748b}}svg text{{font:13px system-ui;fill:#536777}}svg .point-label{{paint-order:stroke;stroke:white;stroke-width:5px;stroke-linejoin:round}}p{{line-height:1.7;color:#536777}}table{{border-collapse:collapse}}td,th{{padding:10px;border-bottom:1px solid #ddd}}summary{{cursor:pointer}}.changes{{border-left:3px solid #7c3aed;padding:4px 12px;background:#f5f0ff}}.changes li{{line-height:1.7;overflow-wrap:anywhere}}
+body{{font-family:system-ui,sans-serif;background:#f4f7fb;color:#173042;padding:24px;margin:0}}main{{max-width:1250px;margin:auto}}section{{background:white;border:1px solid #dbe5ed;border-radius:12px;padding:24px;margin:20px 0}}svg{{width:100%;height:auto}}.legend{{display:flex;flex-wrap:wrap;gap:12px 28px;margin:12px 0 20px;color:#536777}}.legend span{{display:flex;align-items:center;gap:10px}}.legend i{{display:inline-block;width:32px;flex-shrink:0}}.actual-swatch{{border-top:3px solid #2563a6}}.plan-swatch{{border-top:3px dashed #64748b}}svg text{{font:13px system-ui;fill:#536777}}svg .point-label{{paint-order:stroke;stroke:white;stroke-width:5px;stroke-linejoin:round}}p{{line-height:1.7;color:#536777}}table{{border-collapse:collapse}}td,th{{padding:10px;border-bottom:1px solid #ddd}}summary{{cursor:pointer}}.changes{{border-left:3px solid #7c3aed;padding:4px 12px;background:#f5f0ff}}.changes li{{line-height:1.7;overflow-wrap:anywhere}}
 </style><main><h1>分切机 · 最近 {days} 天趋势</h1><p>{dates[0]} 至 {dates[-1]} · {label} · {escape(metric)}</p>
 <p>每个数据点汇总同一设备当天已记录的产品与所选班次。无记录日期留空，折线不跨越缺失日期。橙色点表示“全部班次”下仅有一个班次记录，不代表完整两班产量。紫色“换产”标记表示已确认的换产事件，仍按设备汇总；产品代码不同不会自动判定为换产。</p>
 {''.join(sections) if sections else '<p>所选范围暂无生产记录。</p>'}</main></html>'''
