@@ -106,7 +106,7 @@ database can pass this connection check.
 | `seed_data.py` | Insert simulated demo data without duplicate records |
 | `verify_db.py` | Display tables and records |
 | `main.py` | Welcome message and database status |
-| `requirements.txt` | Documents the standard-library-only dependency policy |
+| `requirements.txt` | Streamlit and ReportLab dependencies for the web application |
 
 `manufacturing.db`, virtual environments, Python caches, and `.env` are ignored
 by Git. Recreate the local database with `python3 init_db.py` followed by
@@ -129,7 +129,8 @@ Open http://127.0.0.1:8502. Select **当日数据** to view the four key metrics
 machine totals, linked 7/30-day trends and expandable raw details. Date, shift,
 machine and metric selections persist in the URL. Existing standalone trend modes
 and order analysis remain available. Download the current daily or trend report
-as HTML. Historical devices with no selected-date observation are shown as no
+as PDF or HTML. PDF files include the selected scope, charts and full data tables;
+PDF generation runs only when the download button is clicked. Historical devices with no selected-date observation are shown as no
 data, not zero output. See PRODUCTION.md for metric and coverage definitions.
 
 Regression checks: `.venv/bin/python -B -m unittest test_production.py test_dashboard.py`.
@@ -141,3 +142,20 @@ the web application. A clone still needs separately retained local production da
 See [DEPLOYMENT.md](DEPLOYMENT.md) for Community Cloud configuration, private
 viewer access, manual JSON import and recovery. `cloud_entry.py` is the hosted
 entrypoint. Local production data and cloud passwords are excluded from Git.
+
+PDF regression checks: `.venv/bin/python -B -m unittest test_pdf.py`.
+
+
+### Order progress demo (local)
+
+Open **订单分析 → 订单进度 Demo** to select one of four synthetic orders.
+The page shows required finished rolls, accumulated qualified finished rolls,
+remaining rolls, completion percentage, a progress bar, a cumulative chart, and
+synthetic shift/device details. DEMO-001 starts at 650 / 1,000 rolls (65%).
+Change the target to try zero demand, completion, or overproduction; target edits
+are session-only. The bar stops at 100% while the percentage retains any excess.
+These records are isolated in `order_progress_demo.py`; they do not read or write
+real production records or allocate production to real orders. Existing order and
+BOM analysis is available under **原有订单分析**. No new dependency is required.
+
+Checks: `.venv/bin/python -B -m unittest test_order_progress.py`.

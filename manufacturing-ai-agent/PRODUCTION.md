@@ -149,3 +149,10 @@ shift observations without assessing performance.
 `.streamlit/config.toml` defines the light blue-gray theme. No new packages were
 introduced; requirements.txt now records the already installed Streamlit version.
 New `test_dashboard.py` uses synthetic records and isolated databases only.
+
+
+## PDF download (local Dashboard)
+
+Use **导出日报 PDF** beside the daily HTML download or **导出趋势 PDF** beside the trend HTML download. The report follows the selected date, shift, device, period and metric. PDF details are expanded and paginated. Downloads are generated on demand with ReportLab; viewing and filtering do not generate PDF files. Existing HTML downloads and standard-library CLI reporting are unchanged.
+
+On macOS the PDF embeds the installed Arial Unicode font. On other systems it uses ReportLab's STSong-Light CJK font; this fallback has not been deployed as part of PLAN-008. No production data is sent to a PDF conversion service.

@@ -1,2 +1,5 @@
 # Web Dashboard dependency; SQLite import and CLI reports use the standard library.
 streamlit==1.65.0
+
+# Generate daily and trend PDFs locally; no remote conversion service.
+reportlab==4.5.1

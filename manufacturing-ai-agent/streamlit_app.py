@@ -115,6 +115,8 @@ if page == "分切生产日报":
         SHIFT_LABELS, aggregate_machines, coverage_text, detail_records,
         filter_records, machine_sort, summarize,
     )
+    from functools import partial
+    from production_pdf import render_daily_pdf, render_trend_pdf
     from production_report import chart, chart_document, render_report
     from production_trends import METRICS, get_trend_data, render_trends
 
@@ -182,9 +184,18 @@ if page == "分切生产日报":
             st.button("刷新数据", width="stretch")
         if is_daily:
             with download_column:
-                st.download_button("下载当前日报 HTML", render_report(daily_rows,day,selected_shift,machine),
-                                   file_name=f"slitting-{day}-{selected_shift or 'all'}-{machine or 'all'}.html",
-                                   mime="text/html")
+                pdf_column, html_column = st.columns(2)
+                with pdf_column:
+                    st.download_button("导出日报 PDF",
+                                       partial(render_daily_pdf, tuple(daily_rows), day, selected_shift, machine),
+                                       file_name=f"slitting-{day}-{selected_shift or 'all'}-{machine or 'all'}.pdf",
+                                       mime="application/pdf", on_click="ignore",
+                                       key=f"daily_pdf_{day}_{selected_shift}_{machine}",
+                                       help="下载当前日期、班次和设备的指标、图表及完整明细。")
+                with html_column:
+                    st.download_button("下载当前日报 HTML", render_report(daily_rows,day,selected_shift,machine),
+                                       file_name=f"slitting-{day}-{selected_shift or 'all'}-{machine or 'all'}.html",
+                                       mime="text/html")
             st.caption(coverage_text(rows,selected_shift))
             st.subheader("整体概况")
             values = [
@@ -234,9 +245,18 @@ if page == "分切生产日报":
         visible_trends=[r for r in trend_rows if machine is None or r['machine_id']==machine]
         if visible_trends:
             trend_report=render_trends(trend_rows,day,days,metric,selected_shift,machine)
-            st.download_button("下载当前趋势报告 HTML",trend_report,
-                               file_name=f"slitting-trend-{day}-{days}days-{selected_shift or 'all'}-{machine or 'all'}.html",
-                               mime="text/html")
+            pdf_column, html_column = st.columns(2)
+            with pdf_column:
+                st.download_button("导出趋势 PDF",
+                                   partial(render_trend_pdf, tuple(trend_rows), day, days, metric, selected_shift, machine),
+                                   file_name=f"slitting-trend-{day}-{days}days-{selected_shift or 'all'}-{machine or 'all'}.pdf",
+                                   mime="application/pdf", on_click="ignore",
+                                   key=f"trend_pdf_{day}_{days}_{metric}_{selected_shift}_{machine}",
+                                   help="下载当前趋势范围、指标、班次和设备的数据及换型标记。")
+            with html_column:
+                st.download_button("下载当前趋势报告 HTML",trend_report,
+                                   file_name=f"slitting-trend-{day}-{days}days-{selected_shift or 'all'}-{machine or 'all'}.html",
+                                   mime="text/html")
             st.iframe(trend_report,height="content",alt="每台分切机的生产趋势图")
         else:
             st.info("所选日期范围、班次及设备暂无趋势记录。")
@@ -252,81 +272,87 @@ if page == "分切生产日报":
     st.stop()
 
 
-order_id = st.text_input(
-    "Order ID",
-    placeholder="Example: ORD001"
-)
+demo_tab, original_tab = st.tabs(["订单进度 Demo", "原有订单分析"])
+with demo_tab:
+    from order_progress_demo import render_demo
+    render_demo()
+
+with original_tab:
+    order_id = st.text_input(
+        "Order ID",
+        placeholder="Example: ORD001"
+    )
 
 
-if st.button("Analyze Order"):
+    if st.button("Analyze Order"):
 
-    if not order_id:
-        st.warning(
-            "Please enter an Order ID."
-        )
-
-    else:
-        order = get_order(order_id)
-
-        if order:
-            st.success(
-                "Order found."
+        if not order_id:
+            st.warning(
+                "Please enter an Order ID."
             )
 
-            st.subheader(
-                "Order Information"
-            )
+        else:
+            order = get_order(order_id)
 
-            st.write(
-                "Order ID:",
-                order[0]
-            )
+            if order:
+                st.success(
+                    "Order found."
+                )
 
-            st.write(
-                "Product:",
-                order[1]
-            )
+                st.subheader(
+                    "Order Information"
+                )
 
-            st.write(
-                "Quantity:",
-                order[2]
-            )
+                st.write(
+                    "Order ID:",
+                    order[0]
+                )
 
-            st.write(
-                "Due Date:",
-                order[3]
-            )
+                st.write(
+                    "Product:",
+                    order[1]
+                )
 
-            st.write(
-                "Priority:",
-                order[4]
-            )
+                st.write(
+                    "Quantity:",
+                    order[2]
+                )
 
-            materials = get_material_requirements(
-                product=order[1],
-                order_quantity=order[2]
-            )
+                st.write(
+                    "Due Date:",
+                    order[3]
+                )
 
-            st.subheader(
-                "Material Requirements"
-            )
+                st.write(
+                    "Priority:",
+                    order[4]
+                )
 
-            if materials:
-                for material in materials:
+                materials = get_material_requirements(
+                    product=order[1],
+                    order_quantity=order[2]
+                )
 
-                    st.write(
-                        f"{material['material_name']} | "
-                        f"Required: {material['required']} | "
-                        f"Available: {material['available']} | "
-                        f"Shortage: {material['shortage']}"
+                st.subheader(
+                    "Material Requirements"
+                )
+
+                if materials:
+                    for material in materials:
+
+                        st.write(
+                            f"{material['material_name']} | "
+                            f"Required: {material['required']} | "
+                            f"Available: {material['available']} | "
+                            f"Shortage: {material['shortage']}"
+                        )
+
+                else:
+                    st.warning(
+                        "No BOM data found for this product."
                     )
 
             else:
-                st.warning(
-                    "No BOM data found for this product."
+                st.error(
+                    "Order not found."
                 )
-
-        else:
-            st.error(
-                "Order not found."
-            )
