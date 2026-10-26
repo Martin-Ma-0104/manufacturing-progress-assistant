@@ -1,0 +1,170 @@
+@import "tailwindcss";
+:root {
+  --background: #f4f7fb;
+  --foreground: #19324a;
+  --card: #fff;
+  --card-foreground: #19324a;
+  --popover: #fff;
+  --popover-foreground: #19324a;
+  --primary: #285f99;
+  --primary-foreground: #fff;
+  --secondary: #edf2f8;
+  --secondary-foreground: #244867;
+  --muted: #edf2f8;
+  --muted-foreground: #617489;
+  --accent: #edf2f8;
+  --accent-foreground: #19324a;
+  --destructive: #a53d3d;
+  --border: #dfe6ef;
+  --input: #d1dce8;
+  --ring: #4072aa;
+  --radius: 0.65rem;
+}
+.dark {
+  --background: #0c1724;
+  --foreground: #deebf7;
+  --card: #122337;
+  --card-foreground: #deebf7;
+  --popover: #122337;
+  --popover-foreground: #deebf7;
+  --secondary: #1b3148;
+  --secondary-foreground: #deebf7;
+  --muted: #1b3148;
+  --muted-foreground: #a2b5ca;
+  --accent: #1b3148;
+  --accent-foreground: #deebf7;
+  --border: #294158;
+  --input: #35506c;
+}
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-md: var(--radius);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--background);
+  color: var(--foreground);
+}
+button,
+a,
+input,
+select,
+textarea {
+  outline-offset: 4px;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+select {
+  border: 1px solid var(--input);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: var(--card);
+  color: var(--foreground);
+  width: 100%;
+  font-size: 14px;
+}
+label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  margin-bottom: 7px;
+}
+h1 {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.8px;
+}
+h2 {
+  font-size: 17px;
+  font-weight: 600;
+}
+h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+p {
+  line-height: 1.65;
+}
+.muted {
+  color: var(--muted-foreground);
+}
+.panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  padding: 22px;
+  min-width: 0;
+}
+.eyebrow {
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.note {
+  border: 1px solid var(--border);
+  background: var(--secondary);
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.chart {
+  height: 285px;
+  min-width: 0;
+  margin-top: 18px;
+}
+.prose p {
+  margin: 8px 0;
+}
+.prose ul,
+.prose ol {
+  padding-left: 22px;
+  list-style: revert;
+}
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.prose pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+td,
+th {
+  white-space: nowrap;
+}
+.recharts-text {
+  fill: var(--muted-foreground);
+}
+.recharts-tooltip-wrapper {
+  color: #19324a;
+}

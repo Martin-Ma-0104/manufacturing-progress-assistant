@@ -97,8 +97,19 @@ st.html("""<style>
 <p>Daily Production Reports and Machine Trends</p>
 </header>""")
 
-page = st.sidebar.radio("功能", ["分切生产日报", "订单分析", "数据导入"],
+from ai_floating_panel import PAGES, migrate_legacy_page, render_floating_assistant
+
+migrate_legacy_page()
+page = st.sidebar.radio("功能", list(PAGES),
                         key="page", bind="query-params")
+
+# This must precede every business branch, including its early st.stop().
+render_floating_assistant(page)
+
+if page == "生产分析":
+    from production_diagnostics_ui import render_diagnostics
+    render_diagnostics()
+    st.stop()
 
 if page == "数据导入":
     from cloud_import_ui import render_import
@@ -240,19 +251,22 @@ if page == "分切生产日报":
                 st.caption(f"最近 {days} 天（含截止日期）；与上方班次、设备选择联动。")
         with metric_column:
             metric=st.selectbox("趋势指标",list(METRICS),key="metric",bind="query-params")
+        show_changeover_details = st.toggle("显示换产说明", value=False,
+                                     key="show_changeovers", bind="query-params",
+                                     help="仅控制图下方详细说明；图中的换产线、圆圈及标记始终保留。导出报告跟随此选择。")
         with closing(get_connection()) as connection:
             trend_rows=get_trend_data(connection,day,days,selected_shift)
         visible_trends=[r for r in trend_rows if machine is None or r['machine_id']==machine]
         if visible_trends:
-            trend_report=render_trends(trend_rows,day,days,metric,selected_shift,machine)
+            trend_report=render_trends(trend_rows,day,days,metric,selected_shift,machine,show_changeovers=show_changeover_details)
             pdf_column, html_column = st.columns(2)
             with pdf_column:
                 st.download_button("导出趋势 PDF",
-                                   partial(render_trend_pdf, tuple(trend_rows), day, days, metric, selected_shift, machine),
+                                   partial(render_trend_pdf, tuple(trend_rows), day, days, metric, selected_shift, machine, show_changeovers=show_changeover_details),
                                    file_name=f"slitting-trend-{day}-{days}days-{selected_shift or 'all'}-{machine or 'all'}.pdf",
                                    mime="application/pdf", on_click="ignore",
-                                   key=f"trend_pdf_{day}_{days}_{metric}_{selected_shift}_{machine}",
-                                   help="下载当前趋势范围、指标、班次和设备的数据及换型标记。")
+                                   key=f"trend_pdf_{day}_{days}_{metric}_{selected_shift}_{machine}_{show_changeover_details}",
+                                   help="下载当前趋势范围、指标、班次和设备的数据，图中换产标记始终保留，详细说明跟随上方开关。")
             with html_column:
                 st.download_button("下载当前趋势报告 HTML",trend_report,
                                    file_name=f"slitting-trend-{day}-{days}days-{selected_shift or 'all'}-{machine or 'all'}.html",

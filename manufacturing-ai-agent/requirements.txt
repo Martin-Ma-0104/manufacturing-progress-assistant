@@ -3,3 +3,6 @@ streamlit==1.65.0
 
 # Generate daily and trend PDFs locally; no remote conversion service.
 reportlab==4.5.1
+
+# Optional AI assistant client; model calls require a key and explicit page consent.
+openai==3.31.0

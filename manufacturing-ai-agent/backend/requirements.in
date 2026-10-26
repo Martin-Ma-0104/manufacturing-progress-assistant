@@ -1,0 +1,15 @@
+fastapi==0.162.0
+uvicorn[standard]
+pydantic>=2.12.2,<3
+python-multipart>=0.0.31
+pypdf
+python-docx
+chromadb==1.5.9
+openai-agents==0.24.0
+httpx
+pytest
+
+mcp>=1.19,<2
+reportlab==4.5.1
+python-dotenv
+ruff

@@ -16,3 +16,16 @@ reports/
 .streamlit/secrets.toml
 *.db
 *.db-*
+
+# Incremental enterprise web workspace: no dependencies, extracted documents or keys
+node_modules/
+.next/
+*.tsbuildinfo
+.pytest_cache/
+.ruff_cache/
+backend/storage/
+.env.*
+!.env.example
+*.log
+*.sqlite
+*.sqlite3

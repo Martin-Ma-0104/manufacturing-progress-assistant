@@ -1,0 +1,32 @@
+{
+  "abnormality_events": [
+    {
+      "event_id": "SYNTHETIC-EXAMPLE-001",
+      "production_date": "2000-01-01",
+      "shift": "Night",
+      "machine_id": "DEMO-MACHINE",
+      "category": "Equipment Issue",
+      "subcategory": "Synthetic example only",
+      "started_at": "2000-01-01T23:30",
+      "ended_at": "2000-01-02T00:30",
+      "reported_minutes": 60,
+      "status": "Closed",
+      "source_name": "synthetic-example",
+      "notes": "Not real production data. For an isolated test database only."
+    },
+    {
+      "event_id": "SYNTHETIC-EXAMPLE-002",
+      "production_date": "2000-01-01",
+      "shift": null,
+      "machine_id": "DEMO-MACHINE",
+      "category": "Other Issue",
+      "subcategory": "Unconfirmed time example",
+      "started_at": null,
+      "ended_at": null,
+      "reported_minutes": null,
+      "status": "Unknown",
+      "source_name": "synthetic-example",
+      "notes": "Not real production data. Unknown shift and minutes are not zero."
+    }
+  ]
+}

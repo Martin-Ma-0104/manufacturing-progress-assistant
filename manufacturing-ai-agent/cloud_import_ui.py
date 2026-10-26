@@ -6,6 +6,7 @@ from contextlib import closing
 import streamlit as st
 from database import get_connection
 from cloud_data import decode_payload, import_payload
+import abnormality
 
 
 def render_import():
@@ -30,13 +31,19 @@ def render_import():
         if uploaded.size>10*1024*1024:
             raise ValueError('File exceeds 10 MB.')
         payload=decode_payload(uploaded.getvalue())
-        st.write(f'生产记录：{len(payload["records"])} 条 · 已确认换型：{len(payload["changeover_events"])} 条')
+        st.write(f'生产记录：{len(payload["records"])} 条 · 已确认换型：{len(payload["changeover_events"])} 条 · '
+                 f'异常记录：{len(payload.get("abnormality_events", []))} 条')
         st.dataframe([{k:r[k] for k in ('production_date','shift','machine_id','product','input_rolls','qualified_output_m2')}
                       for r in payload['records']],hide_index=True,width='stretch')
+        if payload.get('abnormality_events'):
+            st.caption('异常仅为已核对记录；未确认班次留空，分钟合计不等于实际停机。')
+            st.dataframe([{k:r[k] for k in abnormality.PUBLIC_FIELDS} for r in payload['abnormality_events']],
+                         hide_index=True,width='stretch')
+            st.caption(abnormality.coverage(payload['abnormality_events']))
         if st.button('确认导入',type='primary'):
             with closing(get_connection()) as connection:
-                records,events=import_payload(payload,connection)
-            st.success(f'新增 {records} 条生产记录、{events} 条换型；相同数据跳过。')
+                counts=import_payload(payload,connection)
+            st.success(f'新增 {counts[0]} 条生产记录、{counts[1]} 条换型、{counts[2] if len(counts)>2 else 0} 条异常；相同数据跳过，冲突整批拒绝。')
             st.info('切换至生产 Dashboard 查看。')
     except (ValueError,TypeError,KeyError,UnicodeError,sqlite3.Error) as error:
         st.error(f'导入失败：{error}')

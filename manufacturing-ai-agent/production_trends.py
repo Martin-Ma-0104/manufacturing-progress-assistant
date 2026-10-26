@@ -60,7 +60,8 @@ def get_trend_data(connection, end_date, days, shift=None):
     return result
 
 
-def render_trends(rows, end_date, days, metric='合格产出面积', shift=None, machine=None):
+def render_trends(rows, end_date, days, metric='合格产出面积', shift=None, machine=None, *, show_changeovers=False):
+    """Always mark confirmed events; the legacy flag controls only their detail list."""
     field, unit = METRICS[metric]
     compare_plan = metric == '投入卷数（实际 / 计划）'
     end = date.fromisoformat(end_date)
@@ -95,8 +96,7 @@ def render_trends(rows, end_date, days, metric='合格产出面积', shift=None,
                 svg.append(f'<text x="{x}" y="280" text-anchor="middle">{day[5:]}</text>')
             row = points.get(day)
             if row is None:
-                previous = None
-                previous_plan = None
+                # Missing dates have no points; connect the existing observations.
                 continue
             label_anchor = 'end' if index == days - 1 else ('start' if index == 0 else 'middle')
             show_label = days == 7 or len(points) == 1
@@ -111,16 +111,20 @@ def render_trends(rows, end_date, days, metric='合格产出面积', shift=None,
                     svg.append(f'<line class="planned-line" x1="{previous_plan[0]}" y1="{previous_plan[1]}" x2="{x}" y2="{plan_y}" stroke="#64748b" stroke-width="2.5" stroke-dasharray="7 5"/>')
                 svg.append(f'<circle cx="{x}" cy="{plan_y}" r="4" fill="white" stroke="#64748b"><title>{day} · 计划投入 {planned:,.0f} 卷</title></circle>')
                 if show_label:
-                    data_labels.append(f'<text class="point-label" x="{x}" y="{min(y, plan_y)-14}" text-anchor="{label_anchor}">计划 {planned:,.0f}</text>')
+                    plan_label_y = plan_y + 24 if value > planned else plan_y - 14
+                    data_labels.append(f'<text class="point-label plan-label" x="{x}" y="{plan_label_y}" text-anchor="{label_anchor}" style="fill:#64748b">计划 {planned:,.0f}</text>')
                 previous_plan = (x, plan_y)
             incomplete = shift is None and row['shift_count'] < 2
             color = '#c47b15' if incomplete else '#2563a6'
-            tip = f'{day} · {value:,.1f} {unit}' + (' · 仅有一个班次记录' if incomplete else '')
+            series_name = '实际投入 ' if compare_plan else ''
+            tip = f'{day} · {series_name}{value:,.1f} {unit}' + (' · 仅有一个班次记录' if incomplete else '')
             svg.append(f'<circle cx="{x}" cy="{y}" r="5" fill="{color}"><title>{escape(tip)}</title></circle>')
             if show_label:
-                label_y = max(y, plan_y) + 24 if compare_plan else y - 14
+                label_y = (y - 14 if value > planned else y + 24) if compare_plan else y - 14
                 value_label = f'实际 {value:,.0f}' if compare_plan else f'{value:,.1f}'
-                data_labels.append(f'<text class="point-label" x="{x}" y="{label_y}" text-anchor="{label_anchor}">{value_label}</text>')
+                label_class = 'point-label actual-label' if compare_plan else 'point-label'
+                label_style = ' style="fill:#2563a6"' if compare_plan else ''
+                data_labels.append(f'<text class="{label_class}" x="{x}" y="{label_y}" text-anchor="{label_anchor}"{label_style}>{value_label}</text>')
             changeover = row.get('changeover')
             if changeover:
                 # Keep an independent marker so shift-coverage colors remain visible.
@@ -142,14 +146,16 @@ def render_trends(rows, end_date, days, metric='合格产出面积', shift=None,
             for d, r in sorted(points.items())
         )
         events = ''.join(f'<li><b>{d}</b> · {escape(r["changeover"])}</li>'
-                         for d, r in sorted(points.items()) if r.get('changeover'))
+                         for d, r in sorted(points.items()) if show_changeovers and r.get('changeover'))
         event_html = f'<div class="changes"><ul>{events}</ul></div>' if events else ''
         sections.append(f'<section><h2>{escape(name)}</h2><p>{hint}</p>{legend_html}{"".join(svg)}{event_html}'
                         f'<details><summary>查看数据点</summary><table><tr><th>日期</th><th>{escape(metric_heading)}（{unit}）</th>{plan_heading}<th>已记录班次数</th></tr>{details}</table></details></section>')
     label = {None: '全部班次', 'Day': '白班', 'Night': '夜班'}[shift]
+    gap_note = '按已有记录日期连线，未记录日期不补数据。'
+    changeover_note = '紫色“换产”标记表示已确认的换产事件，仍按设备汇总；产品代码不同不会自动判定为换产。'
     return f'''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>分切机趋势 · {days} 天</title><style>
 body{{font-family:system-ui,sans-serif;background:#f4f7fb;color:#173042;padding:24px;margin:0}}main{{max-width:1250px;margin:auto}}section{{background:white;border:1px solid #dbe5ed;border-radius:12px;padding:24px;margin:20px 0}}svg{{width:100%;height:auto}}.legend{{display:flex;flex-wrap:wrap;gap:12px 28px;margin:12px 0 20px;color:#536777}}.legend span{{display:flex;align-items:center;gap:10px}}.legend i{{display:inline-block;width:32px;flex-shrink:0}}.actual-swatch{{border-top:3px solid #2563a6}}.plan-swatch{{border-top:3px dashed #64748b}}svg text{{font:13px system-ui;fill:#536777}}svg .point-label{{paint-order:stroke;stroke:white;stroke-width:5px;stroke-linejoin:round}}p{{line-height:1.7;color:#536777}}table{{border-collapse:collapse}}td,th{{padding:10px;border-bottom:1px solid #ddd}}summary{{cursor:pointer}}.changes{{border-left:3px solid #7c3aed;padding:4px 12px;background:#f5f0ff}}.changes li{{line-height:1.7;overflow-wrap:anywhere}}
 </style><main><h1>分切机 · 最近 {days} 天趋势</h1><p>{dates[0]} 至 {dates[-1]} · {label} · {escape(metric)}</p>
-<p>每个数据点汇总同一设备当天已记录的产品与所选班次。无记录日期留空，折线不跨越缺失日期。橙色点表示“全部班次”下仅有一个班次记录，不代表完整两班产量。紫色“换产”标记表示已确认的换产事件，仍按设备汇总；产品代码不同不会自动判定为换产。</p>
+<p>每个数据点汇总同一设备当天已记录的产品与所选班次。{gap_note}橙色点表示“全部班次”下仅有一个班次记录，不代表完整两班产量。{changeover_note}</p>
 {''.join(sections) if sections else '<p>所选范围暂无生产记录。</p>'}</main></html>'''

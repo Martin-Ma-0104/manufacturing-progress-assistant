@@ -1,0 +1,80 @@
+.st-key-ai_floating_root {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  z-index: 1000;
+}
+.st-key-ai_floating_root:has(.st-key-ai_panel_body) {
+  width: min(420px, calc(100vw - 24px));
+  max-height: calc(100dvh - 88px);
+  padding: 14px;
+  border: 1px solid #cddae7;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #19344f;
+  box-shadow: 0 12px 45px #17334f30;
+  overflow: hidden;
+}
+.st-key-ai_launcher button {
+  min-width: 64px;
+  min-height: 48px;
+  border-radius: 28px;
+  box-shadow: 0 5px 18px #17334f35;
+}
+.st-key-ai_panel_header {
+  flex-shrink: 0;
+  border-bottom: 1px solid #e0e7ef;
+  padding-bottom: 8px;
+}
+.st-key-ai_panel_header .ai-drag-handle {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  line-height: 1.35;
+  min-width: 0;
+}
+.st-key-ai_panel_header .ai-drag-handle:active { cursor: grabbing; }
+.st-key-ai_panel_header .ai-drag-handle:focus-visible {
+  outline: 2px solid #2863a5;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+.st-key-ai_panel_header strong { font-size: 15px; }
+.st-key-ai_panel_header small { display: block; color: #62778b; font-size: 11px; }
+.st-key-ai_close button { min-width: 64px; }
+.st-key-ai_settings button { min-width: 60px; }
+.st-key-ai_floating_root .st-key-ai_panel_body {
+  height: min(500px, calc(100dvh - 190px));
+  max-height: min(500px, calc(100dvh - 190px));
+  min-height: 0;
+  flex: 0 1 auto;
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 2px 4px 4px 0;
+}
+.st-key-ai_panel_body [data-testid="stCaptionContainer"] p { font-size: 12px; }
+.st-key-ai_panel_body [data-testid="stMetricValue"] {
+  font-size: 22px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.st-key-ai_panel_body [data-testid="stMetricLabel"] p { font-size: 12px; }
+.st-key-ai_panel_body [data-testid="stChatMessage"] { padding: 9px; }
+.st-key-ai_panel_body [data-testid="stChatMessage"] p { font-size: 13px; }
+.st-key-ai_panel_body .st-key-ai_question {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  z-index: 2;
+}
+.st-key-ai_panel_body [data-testid="stChatInput"] { position: static; }
+.st-key-ai_panel_body [data-testid="stCheckbox"] label p { font-size: 12px; }
+@media (max-width: 600px) {
+  .st-key-ai_floating_root { right: 12px; bottom: 12px; }
+  .st-key-ai_floating_root:has(.st-key-ai_panel_body) { padding: 10px; }
+}

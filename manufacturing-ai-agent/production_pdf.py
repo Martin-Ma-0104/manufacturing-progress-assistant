@@ -137,7 +137,8 @@ def render_daily_pdf(rows, day, shift=None, machine=None):
     return build(story, f'{day} 生产日报', landscape(A4))
 
 
-def trend_drawing(rows, dates, field, unit, maximum, compare_plan, shift, width):
+def trend_drawing(rows, dates, field, unit, maximum, compare_plan, shift, width, *, show_changeovers=False):
+    """Confirmed markers are always visible; retain the legacy keyword for callers."""
     drawing = Drawing(width, 215)
     left, right, bottom, top = 55, width-25, 36, 175
     for tick in range(5):
@@ -157,7 +158,7 @@ def trend_drawing(rows, dates, field, unit, maximum, compare_plan, shift, width)
             text(drawing,x,18,day[5:],7,GRAY,'middle')
         row = points.get(day)
         if row is None:
-            previous = previous_plan = None
+            # Keep the previous observation without inventing a missing-date value.
             continue
         y = bottom + row[field]/maximum*(top-bottom)
         if previous:
@@ -173,12 +174,14 @@ def trend_drawing(rows, dates, field, unit, maximum, compare_plan, shift, width)
         if row.get('changeover'):
             drawing.add(Line(x,bottom,x,top+9,strokeColor=PURPLE,strokeDashArray=[3,3]))
             text(drawing,x,top+13,'换产',7,PURPLE,'end' if i==len(dates)-1 else 'start')
+            drawing.add(Circle(x,y,6,fillColor=None,strokeColor=PURPLE,strokeWidth=1.25))
         previous = (x,y)
     text(drawing,left,1,f'单位：{unit} | 横轴：生产日期',7,GRAY)
     return drawing
 
 
-def render_trend_pdf(rows, end_date, days, metric='合格产出面积', shift=None, machine=None):
+def render_trend_pdf(rows, end_date, days, metric='合格产出面积', shift=None, machine=None, *, show_changeovers=False):
+    """Always mark confirmed events; the legacy flag controls only detail paragraphs."""
     if days not in (7,30) or shift not in SHIFT_LABELS:
         raise ValueError('Unsupported period or shift.')
     field, unit = METRICS[metric]
@@ -191,6 +194,8 @@ def render_trend_pdf(rows, end_date, days, metric='合格产出面积', shift=No
     fields = (field,'planned_rolls') if compare_plan else (field,)
     maximum = (max((r[f] for r in rows for f in fields),default=0) or 1)*1.1
     width = A4[0]-84
+    gap_note = '按已有记录日期连线，未记录日期不补数据。'
+    changeover_note = '紫色标记：已确认换产。'
     story = []
     for index, name in enumerate(names):
         if index: story.append(PageBreak())
@@ -198,12 +203,12 @@ def render_trend_pdf(rows, end_date, days, metric='合格产出面积', shift=No
         story += [paragraph('Production Data Viewer Agent',16),
                   paragraph(f'{name} | 最近 {days} 天趋势 | {metric}',13),
                   paragraph(f'{dates[0]} 至 {end_date} | {SHIFT_LABELS[shift]} | 有记录 {len(data)} 天 / {days} 天',9),
-                  paragraph('无记录日期留空，折线不跨缺失日期。橙色点：仅一个班次记录；紫色标记：已确认换产。',8,GRAY)]
+                  paragraph(gap_note+'橙色点：仅一个班次记录。'+changeover_note,8,GRAY)]
         if len(data)==1:
             story.append(paragraph('目前只有一个日期的数据点，积累更多日期后显示趋势。',8,GRAY))
-        story.append(trend_drawing(data,dates,field,unit,maximum,compare_plan,shift,width))
+        story.append(trend_drawing(data,dates,field,unit,maximum,compare_plan,shift,width,show_changeovers=show_changeovers))
         for r in data:
-            if r.get('changeover'):
+            if show_changeovers and r.get('changeover'):
                 story.append(paragraph(f'{r["production_date"]} | {r["changeover"]}',8,PURPLE))
         headers = ['日期',f'{"实际投入" if compare_plan else metric} ({unit})']
         if compare_plan: headers.append('计划投入 (卷)')

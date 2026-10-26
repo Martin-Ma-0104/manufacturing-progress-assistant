@@ -1,0 +1,292 @@
+{
+  "version": "1.0",
+  "purpose": "Field preparation only; not accepted by the production JSON importer.",
+  "modules": {
+    "产能与情景排程": {
+      "status": "awaiting_real_data",
+      "required_entities": [
+        "shift_runtime",
+        "rate_standards",
+        "routing_wip"
+      ]
+    },
+    "订单进度与交期": {
+      "status": "awaiting_real_data",
+      "required_entities": [
+        "order_lines",
+        "production_allocations",
+        "shift_runtime",
+        "rate_standards"
+      ]
+    },
+    "库存与缺料": {
+      "status": "awaiting_real_data",
+      "required_entities": [
+        "inventory_movements",
+        "inventory_balances",
+        "inbound_receipts",
+        "product_bom",
+        "order_lines"
+      ]
+    }
+  },
+  "entities": {
+    "shift_runtime": {
+      "fields": [
+        {
+          "name": "production_date",
+          "type_and_unit": "date",
+          "meaning": "business date"
+        },
+        {
+          "name": "machine_id",
+          "type_and_unit": "text",
+          "meaning": "reviewed machine ID"
+        },
+        {
+          "name": "shift",
+          "type_and_unit": "Day|Night",
+          "meaning": "explicit business shift"
+        },
+        {
+          "name": "product_spec",
+          "type_and_unit": "text",
+          "meaning": "SKU, width and roll length"
+        },
+        {
+          "name": "planned_available_hours",
+          "type_and_unit": "hours",
+          "meaning": "calendar-backed planned availability"
+        },
+        {
+          "name": "actual_run_minutes",
+          "type_and_unit": "minutes",
+          "meaning": "measured run time, not shift duration"
+        },
+        {
+          "name": "qualified_quantity",
+          "type_and_unit": "number + uom",
+          "meaning": "observed output with explicit unit"
+        },
+        {
+          "name": "setup_minutes",
+          "type_and_unit": "minutes",
+          "meaning": "measured changeover time"
+        }
+      ],
+      "records": []
+    },
+    "rate_standards": {
+      "fields": [
+        {
+          "name": "machine_id",
+          "type_and_unit": "text",
+          "meaning": "machine capability"
+        },
+        {
+          "name": "product_spec",
+          "type_and_unit": "text",
+          "meaning": "exact matching specification"
+        },
+        {
+          "name": "rate",
+          "type_and_unit": "quantity/hour",
+          "meaning": "standard rate; explicit output unit"
+        },
+        {
+          "name": "basis",
+          "type_and_unit": "text",
+          "meaning": "validated source and effective date"
+        }
+      ],
+      "records": []
+    },
+    "routing_wip": {
+      "fields": [
+        {
+          "name": "product_spec",
+          "type_and_unit": "text",
+          "meaning": "exact specification"
+        },
+        {
+          "name": "operation_id",
+          "type_and_unit": "text",
+          "meaning": "operation and predecessor"
+        },
+        {
+          "name": "observed_at",
+          "type_and_unit": "local datetime + timezone",
+          "meaning": "observation timestamp"
+        },
+        {
+          "name": "queued_quantity",
+          "type_and_unit": "number + uom",
+          "meaning": "WIP before operation"
+        },
+        {
+          "name": "wait_minutes",
+          "type_and_unit": "minutes",
+          "meaning": "observed waiting; needed for bottleneck evidence"
+        }
+      ],
+      "records": []
+    },
+    "order_lines": {
+      "fields": [
+        {
+          "name": "order_line_id",
+          "type_and_unit": "text",
+          "meaning": "unique order line"
+        },
+        {
+          "name": "product_spec",
+          "type_and_unit": "text",
+          "meaning": "SKU, width and roll length"
+        },
+        {
+          "name": "required_quantity",
+          "type_and_unit": "number + uom",
+          "meaning": "required qualified output"
+        },
+        {
+          "name": "due_date",
+          "type_and_unit": "date",
+          "meaning": "promised date; not estimated"
+        }
+      ],
+      "records": []
+    },
+    "production_allocations": {
+      "fields": [
+        {
+          "name": "production_record_key",
+          "type_and_unit": "text",
+          "meaning": "reviewed production date/shift/machine/product"
+        },
+        {
+          "name": "order_line_id",
+          "type_and_unit": "text",
+          "meaning": "references order_lines"
+        },
+        {
+          "name": "allocated_qualified_quantity",
+          "type_and_unit": "number + uom",
+          "meaning": "sum allocated cannot exceed qualified output"
+        }
+      ],
+      "records": []
+    },
+    "inventory_movements": {
+      "fields": [
+        {
+          "name": "movement_id",
+          "type_and_unit": "text",
+          "meaning": "unique immutable transaction"
+        },
+        {
+          "name": "material_id",
+          "type_and_unit": "text",
+          "meaning": "canonical material"
+        },
+        {
+          "name": "recorded_at",
+          "type_and_unit": "local datetime + timezone",
+          "meaning": "as-of timestamp"
+        },
+        {
+          "name": "quantity_change",
+          "type_and_unit": "signed number + uom",
+          "meaning": "receipt or issue; traceable starting balance"
+        },
+        {
+          "name": "reserved_quantity",
+          "type_and_unit": "number + uom",
+          "meaning": "reserved amount, not available stock"
+        },
+        {
+          "name": "expected_receipts",
+          "type_and_unit": "quantity + uom + due date",
+          "meaning": "confirmed inbound supply"
+        }
+      ],
+      "records": []
+    },
+    "inventory_balances": {
+      "fields": [
+        {
+          "name": "material_id",
+          "type_and_unit": "text",
+          "meaning": "canonical material"
+        },
+        {
+          "name": "as_of",
+          "type_and_unit": "local datetime + timezone",
+          "meaning": "stock snapshot time"
+        },
+        {
+          "name": "quantity_on_hand",
+          "type_and_unit": "number + uom",
+          "meaning": "verified physical/book balance"
+        },
+        {
+          "name": "quantity_reserved",
+          "type_and_unit": "number + uom",
+          "meaning": "committed stock, not available"
+        }
+      ],
+      "records": []
+    },
+    "inbound_receipts": {
+      "fields": [
+        {
+          "name": "receipt_id",
+          "type_and_unit": "text",
+          "meaning": "unique confirmed inbound line"
+        },
+        {
+          "name": "material_id",
+          "type_and_unit": "text",
+          "meaning": "canonical material"
+        },
+        {
+          "name": "expected_quantity",
+          "type_and_unit": "number + uom",
+          "meaning": "confirmed quantity"
+        },
+        {
+          "name": "expected_date",
+          "type_and_unit": "date",
+          "meaning": "expected receipt date"
+        }
+      ],
+      "records": []
+    },
+    "product_bom": {
+      "fields": [
+        {
+          "name": "product_spec",
+          "type_and_unit": "text",
+          "meaning": "exact output specification"
+        },
+        {
+          "name": "material_id",
+          "type_and_unit": "text",
+          "meaning": "references inventory material"
+        },
+        {
+          "name": "quantity_per_output",
+          "type_and_unit": "material uom/output uom",
+          "meaning": "explicit conversion with effective date"
+        }
+      ],
+      "records": []
+    }
+  },
+  "rules": [
+    "Do not mix simulated enterprise records with reviewed production.",
+    "Do not infer a permanent 2000 m roll length from a batch-specific confirmation.",
+    "Allocations must not double count qualified output across orders.",
+    "Missing units or unit conversions block calculations.",
+    "No business schema migration or real-data import is enabled in this version."
+  ]
+}
