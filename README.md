@@ -35,6 +35,39 @@ available alongside FX1-FX7, while machines without records stay unconnected.
   or ERP connectivity, actual work-order allocation, grounded LLM synthesis and
   real inventory transactions are not implemented. Keep this preview local.
 
+### Current Dashboard behavior
+
+- Use calendar dates or 7-/30-day presets, with machine, shift, product and
+  historical/demo filters retained in the URL across refreshes.
+- Review planned and actual input, input plan attainment, qualified output and
+  recorded abnormality minutes. Missing measured cycle time, utilization and
+  capacity are explicitly unavailable; scenario results are separate.
+- The full-width input chart uses a blue solid actual line and a slate dashed
+  plan reference. Every non-null value, including an explicit zero, is labeled.
+  Weekly labels identify Actual/Plan; longer ranges use colour-matched compact
+  numbers. Hover shows both exact counts, the full date and mother-roll units.
+- Labels follow their own points: the higher value is above, the lower below;
+  equal values put plan above and actual below. Dense charts scroll horizontally
+  instead of dropping labels. Dates remain horizontal and use true calendar spacing.
+- Connect existing observations across missing dates without adding zeros,
+  estimates or extrapolated points. First/last recorded dates and a collapsible
+  missing-date list describe only the current filter.
+- Selecting one machine retains confirmed purple changeover lines and rings.
+  Short labels use a separate event band; detailed explanations start collapsed.
+  Product text differences do not automatically create changeovers.
+- Expand **View all recorded values** for the complete date/actual/plan table.
+  **Machine performance records** also starts collapsed and retains every existing
+  column and unavailable value. Collapsing tables does not hide chart points.
+- Compare actual and qualified output by machine and recorded abnormality minutes
+  by category. Export the current selection as PDF or HTML. No automatic machine
+  ranking, loss attribution or root-cause conclusion is generated.
+
+The latest Dashboard changes passed 14 layout tests, 13 existing production and
+Dashboard regressions, TypeScript checks and a production build. Server-rendered
+markup was checked with controlled chart props; browser pixel/layout and actual
+mouse/keyboard interaction acceptance remain pending. These checks do not
+establish hosted behavior or live-model answer quality.
+
 From `manufacturing-ai-agent/`, set up **Python 3.12** and **Node 24**:
 
 ```bash
@@ -64,7 +97,7 @@ reviewed imports, screenshots, extracted company documents and secrets are not
 included in this repository. A clone starts without private production history.
 Publishing this code does not configure external Next.js/FastAPI hosting.
 
-## Slitting Production Dashboard
+## Preserved Streamlit Slitting Dashboard
 
 The Dashboard is designed for industrial engineers and production managers who need to review recorded production and compare machines such as FX1 and FX2. It preserves the reported measurements and lets users interpret the results without automatic equipment rankings or performance alerts.
 
@@ -101,7 +134,7 @@ For future imports, retain verified numeric JSON, SQLite records, source notes, 
 
 The application does not perform automatic image recognition or live equipment collection. Its optional floating AI assistant reads reviewed numeric facts and does not change production data. Production databases, source metadata, and private import or recovery files stay outside the source repository and need separate backups. **A clone does not contain the user's production history.**
 
-### Optional AI Production Assistant
+### Optional Streamlit AI Production Assistant
 
 The assistant opens as a simple **AI Chat** floating window from the **AI**
 button at the bottom right. The default view contains messages and a question
@@ -172,7 +205,7 @@ request. Request timeouts are at most 30 seconds within a 60-second total deadli
 Only current-session results are cached, with scope, model, question, and data
 version in the key. These limits do not guarantee costs or response speed.
 
-PLAN-018 v2 local validation passed **94 tests** (the previous 71 plus 23
+Historical Streamlit validation (PLAN-018 v2) passed **94 tests** (the previous 71 plus 23
 abnormality/import/query/chart/UI regressions). Tests use synthetic SQLite data
 and mocked model responses, including privacy envelopes, atomic conflicts,
 old-bundle compatibility, cross-midnight times, unknown shifts, overlaps, missing
@@ -201,8 +234,8 @@ request was made. Production data and dependencies remain unchanged. Whitespace
 checks passed; the initial implementation also passed `pip check`.
 
 User acceptance remains pending. This is not a new real-model, account-permission,
-cost, latency, or answer-quality acceptance test. No GitHub push or deployment
-was performed; local verification does not establish hosted behavior or data.
+cost, latency, or answer-quality acceptance test. Those historical checks did not include a GitHub push or deployment;
+local verification does not establish hosted behavior or data.
 
 The local project driver document records detailed execution results. See the
 [full assistant guide](manufacturing-ai-agent/README.md#ai-production-assistant)

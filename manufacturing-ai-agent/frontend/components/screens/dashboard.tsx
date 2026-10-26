@@ -11,15 +11,14 @@ import {
   LineChart,
   Line,
   ComposedChart,
-  ReferenceLine,
 } from "recharts";
 import { RefreshCw, Clock3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { fmt, query } from "@/lib/api";
 import { useWorkspace } from "../workspace";
 import DataTable from "../data-table";
+import InputTrend from "../charts/input-trend";
 export default function Dashboard() {
   const { data, scope, loading, refresh } = useWorkspace();
   if (loading)
@@ -87,23 +86,6 @@ export default function Dashboard() {
       qualified_output_m2: r?.qualified_output_m2 ?? null,
     });
   }
-  const changeDates = [
-    ...new Set(data.changeovers.map((c) => c.production_date)),
-  ].filter(Boolean);
-  const changeMarkers = changeDates.map((date) => (
-    <ReferenceLine
-      key={date}
-      x={new Date(date + "T12:00:00").getTime()}
-      stroke="#8655ba"
-      strokeDasharray="4 5"
-      label={{
-        value: "Changeover",
-        position: "insideTopRight",
-        fontSize: 10,
-        fill: "#8655ba",
-      }}
-    />
-  ));
   const axis = (value: number) =>
     new Date(value).toLocaleDateString("en-US", {
       month: "short",
@@ -150,52 +132,15 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+      <InputTrend
+        daily={data.daily}
+        events={data.changeovers}
+        start={scope.start}
+        end={scope.end}
+        machine={scope.machine}
+        shift={scope.shift}
+      />
       <div className="grid gap-6 xl:grid-cols-2">
-        <section className="panel">
-          <div className="flex justify-between">
-            <div>
-              <h2>Planned vs. actual input</h2>
-              <p className="text-xs muted">
-                Mother rolls · dashed plan reference · select one machine for
-                changeover markers
-              </p>
-            </div>
-            <Badge variant="outline">Historical</Badge>
-          </div>
-          <div className="chart">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={daily}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis
-                  dataKey="time"
-                  type="number"
-                  domain={[start, end]}
-                  tickFormatter={axis}
-                />
-                <YAxis />
-                <Tooltip labelFormatter={(v) => axis(Number(v))} />
-                <Legend />
-                {scope.machine && changeMarkers}
-                <Line
-                  name="Actual input"
-                  dataKey="input_rolls"
-                  stroke="#2d6b9c"
-                  strokeWidth={2.5}
-                  connectNulls
-                  dot={{ r: 3 }}
-                />
-                <Line
-                  name="Planned input"
-                  dataKey="planned_rolls"
-                  stroke="#8192a8"
-                  strokeDasharray="6 5"
-                  connectNulls
-                  dot={{ r: 3 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
         <section className="panel">
           <h2>Qualified production trend</h2>
           <p className="text-xs muted">
@@ -314,22 +259,24 @@ export default function Dashboard() {
           data.
         </div>
       </section>
-      <section className="panel">
-        <h2 className="mb-4">Machine performance records</h2>
-        <DataTable
-          rows={data.machines.map((m) => ({
-            machine: m.machine_id,
-            source_status: m.status,
-            planned_input: m.planned_rolls,
-            actual_input: m.input_rolls,
-            attainment: m.attainment,
-            qualified_m2: m.qualified_output_m2,
-            area_qualification: m.qualification,
-            event_minutes: m.abnormalities.reported_minutes,
-            cycle_minutes: m.cycle_minutes,
-          }))}
-        />
-      </section>
+      <details className="panel machine-records-details">
+        <summary>Machine performance records · click to view</summary>
+        <div className="mt-4">
+          <DataTable
+            rows={data.machines.map((m) => ({
+              machine: m.machine_id,
+              source_status: m.status,
+              planned_input: m.planned_rolls,
+              actual_input: m.input_rolls,
+              attainment: m.attainment,
+              qualified_m2: m.qualified_output_m2,
+              area_qualification: m.qualification,
+              event_minutes: m.abnormalities.reported_minutes,
+              cycle_minutes: m.cycle_minutes,
+            }))}
+          />
+        </div>
+      </details>
       <details className="note">
         <summary>Coverage and calculation notes</summary>
         {data.warnings.map((w, i) => (

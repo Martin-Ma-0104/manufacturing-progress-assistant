@@ -1,17 +1,19 @@
 # Manufacturing AI / Production Data Viewer Agent
 
-A manufacturing data dashboard for IE and production managers, focused on daily
-**slitting machine performance**. Review planned input, actual input, qualified
-finished rolls, output areas, and recorded production history for machines such
-as FX1 and FX2.
+A production data application for industrial engineers and production managers,
+with a **Next.js / React / TypeScript** web preview and **FastAPI / Python / SQLite**
+data services. Its current focus is slitting machine input, output, production
+history, recorded abnormalities and clear machine comparisons.
 
-The application uses Python, Streamlit, SQLite, and ReportLab, with an optional
-read-only **AI Production Assistant** using the official OpenAI Python SDK.
-Production calculations remain deterministic Python functions. The application
-does not recognize screenshots, collect live machine signals, or autonomously
-change production data. Existing screen labels are primarily Chinese; this
-README describes the workflow in English.
+The original **Streamlit** viewer remains available with reviewed JSON import,
+order-progress demonstrations, report downloads and its floating AI assistant.
+The newer English web interface adds scenario tools and cited knowledge retrieval;
+the preserved Streamlit interface uses primarily Chinese labels.
 
+Production calculations are deterministic Python functions. The application does
+not recognize screenshots, collect live machine signals or autonomously change
+production records. Real production history and credentials are not included in
+the repository; a clone starts without private data.
 
 ## New enterprise web preview (local first release)
 
@@ -33,6 +35,39 @@ available as a fallback. No production database migration is required.
   autonomous orders/inventory actions are available.
 - Authentication, live MES/ERP feeds, real scheduling and grounded LLM synthesis
   are not yet implemented. Keep the development services on localhost.
+
+### Current Dashboard behavior
+
+- Use calendar dates or 7-/30-day presets, with machine, shift, product and
+  historical/demo filters retained in the URL across refreshes.
+- Review planned and actual input, input plan attainment, qualified output and
+  recorded abnormality minutes. Missing measured cycle time, utilization and
+  capacity are explicitly unavailable; scenario results are separate.
+- The full-width input chart uses a blue solid actual line and a slate dashed
+  plan reference. Every non-null value, including an explicit zero, is labeled.
+  Weekly labels identify Actual/Plan; longer ranges use colour-matched compact
+  numbers. Hover shows both exact counts, the full date and mother-roll units.
+- Labels follow their own points: the higher value is above, the lower below;
+  equal values put plan above and actual below. Dense charts scroll horizontally
+  instead of dropping labels. Dates remain horizontal and use true calendar spacing.
+- Connect existing observations across missing dates without adding zeros,
+  estimates or extrapolated points. First/last recorded dates and a collapsible
+  missing-date list describe only the current filter.
+- Selecting one machine retains confirmed purple changeover lines and rings.
+  Short labels use a separate event band; detailed explanations start collapsed.
+  Product text differences do not automatically create changeovers.
+- Expand **View all recorded values** for the complete date/actual/plan table.
+  **Machine performance records** also starts collapsed and retains every existing
+  column and unavailable value. Collapsing tables does not hide chart points.
+- Compare actual and qualified output by machine and recorded abnormality minutes
+  by category. Export the current selection as PDF or HTML. No automatic machine
+  ranking, loss attribution or root-cause conclusion is generated.
+
+The latest Dashboard changes passed 14 layout tests, 13 existing production and
+Dashboard regressions, TypeScript checks and a production build. Server-rendered
+markup was checked with controlled chart props; browser pixel/layout and actual
+mouse/keyboard interaction acceptance remain pending. These checks do not
+establish hosted behavior or live-model answer quality.
 
 Start from this repository with **Python 3.12** and **Node 24**:
 
@@ -57,7 +92,7 @@ Windows commands, server configuration, calculations, tests and current limits.
 Never commit actual `.env`, keys, SQLite files, extracted documents or company
 records. The remainder below describes the preserved Streamlit functionality.
 
-## Slitting Machine Dashboard
+## Preserved Streamlit Slitting Dashboard
 
 ### Daily production data
 
@@ -133,7 +168,7 @@ On macOS it embeds the installed Arial Unicode font when available; other
 platforms use a CJK font fallback. Local PDF rendering and downloads have been
 checked; font rendering in the latest cloud build has not been verified.
 
-## AI Production Assistant
+## Preserved Streamlit AI Production Assistant
 
 The assistant opens as a simple **AI Chat** floating window from the **AI**
 button at the bottom right. The default view contains messages and a question
@@ -465,10 +500,23 @@ entries. Observed production machine IDs are not limited to this demo machine li
 
 ## Validation
 
-Run the complete existing suite from this directory with dependencies installed:
+For the current web Dashboard, run from `frontend/`:
 
 ```bash
-.venv/bin/python -B -m unittest test_production.py test_dashboard.py test_cloud_data.py test_pdf.py test_order_progress.py test_ai_production_data.py test_ai_production_client.py test_ai_production.py test_ai_floating_panel.py test_abnormality.py -v
+node --test tests/trend-layout.test.mjs
+npm run typecheck
+npm run build
+```
+
+The current update passed 14 layout tests and 13 production/Dashboard regressions.
+TypeScript and production build checks also passed. Browser visual and actual
+disclosure interaction acceptance remain pending. The older browser checks below
+refer to earlier Streamlit work, not the latest Next.js Dashboard.
+
+Run the complete preserved Python suite from this directory with dependencies installed:
+
+```bash
+.venv/bin/python -B -m unittest test_production.py test_dashboard.py test_cloud_data.py test_pdf.py test_order_progress.py test_ai_production_data.py test_ai_production_client.py test_ai_production.py test_ai_floating_panel.py test_abnormality.py test_production_diagnostics.py test_planning_data_contracts.py -v
 ```
 
 The original five modules cover imports and conflicts, aggregation and filters,
@@ -478,7 +526,7 @@ checks, mocked API/client limits, UI permission/cache checks, and floating-panel
 state/navigation regressions. They must not
 use real production records or make paid model calls.
 
-PLAN-018 v2 local validation passed **94 tests** (the previous 71 plus 23
+Historical Streamlit validation (PLAN-018 v2) passed **94 tests** (the previous 71 plus 23
 abnormality/import/query/chart/UI regressions). Tests use synthetic SQLite data
 and mocked model responses, including privacy envelopes, atomic conflicts,
 old-bundle compatibility, cross-midnight times, unknown shifts, overlaps, missing
@@ -507,8 +555,8 @@ request was made. Production data and dependencies remain unchanged. Whitespace
 checks passed; the initial implementation also passed `pip check`.
 
 User acceptance remains pending. This is not a new real-model, account-permission,
-cost, latency, or answer-quality acceptance test. No GitHub push or deployment
-was performed; local verification does not establish hosted behavior or data.
+cost, latency, or answer-quality acceptance test. Those historical checks did not include a GitHub push or deployment;
+local verification does not establish hosted behavior or data.
 
 ## Current Boundaries
 

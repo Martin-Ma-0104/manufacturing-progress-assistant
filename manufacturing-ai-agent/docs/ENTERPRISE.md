@@ -178,6 +178,53 @@ Try the synthetic `sample_data/sample-sop.md` (also downloadable in Knowledge
 Base). It is not a factory procedure. Ask: "What cleaning evidence does the SOP
 require?" Uploaded content is evidence, never an instruction source for tools.
 
+## Input trend readability
+
+The planned/actual input trend occupies a full row, separate from the overview
+cards. Actual input uses a blue solid line and filled points; the plan uses a
+slate dashed line and hollow points. Equal values use concentric points. Value
+labels follow their own points: the higher series is above and the lower below;
+for equal values, plan is above and actual below. Colours adapt to dark mode.
+
+Every non-null actual and planned input value is labeled, including explicit
+zero. Weekly views use Actual/Plan prefixes; longer ranges use compact numbers
+in the corresponding series colour, with the fixed legend and mother-roll unit.
+Tooltips retain both exact counts and the full date. No recorded value is sampled
+away to reduce label density.
+Confirmed changeover lines and rings stay visible for the selected machine;
+short text uses a separate event band with collision lanes. Multiple same-day
+events keep both descriptions. Detailed explanations remain collapsed by default.
+Date ticks are horizontal MM-DD within the selected calendar bounds. The input
+chart uses UTC calendar anchors so timezone/DST changes do not shift business dates.
+
+The plot reserves headroom, a date-label area and edge space. Narrow layouts
+scroll the plot horizontally instead of compressing labels. Minimum canvas width
+uses the selected calendar span, observed date gaps and label widths so all value
+labels have room. Missing days remain absent and recorded points connect across
+gaps with true calendar spacing. Production math and database records are unchanged.
+
+Below the input chart, the first/last recorded dates and missing-date count refer
+only to the current filters. The full date/actual/plan table and missing-date list
+are collapsed native disclosures. The bottom Machine performance records table
+also starts collapsed; expanding it reveals the existing rows and all nine columns,
+including unavailable values. This does not hide chart points or remove records.
+
+Run the dependency-free layout checks from `frontend/` with Node 24:
+
+```bash
+node --test tests/trend-layout.test.mjs
+```
+
+Validation for this input-trend update: 14 layout tests, 13 existing
+dashboard/production regressions, TypeScript and production build checks passed.
+Controlled server-rendering checks covered complete non-null labels, point-table
+rows and default-collapsed disclosure markup with original columns and unavailable
+values preserved. Local data-file hashes remained unchanged. Production data and
+private validation examples are not included in this repository.
+Browser pixel/layout and mouse/keyboard interaction acceptance was not performed;
+controlled server rendering, numerical layout checks and HTTP success do not
+establish browser visual acceptance. No dependency or backend changes were needed.
+
 ## Metrics and missing data
 
 Reviewed history is the default. A separate synthetic source uses fabricated
