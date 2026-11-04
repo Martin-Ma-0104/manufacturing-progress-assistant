@@ -249,3 +249,9 @@ unseen workloads are future work. No paid model evaluation, cloud publication,
 application deployment, or browser visual acceptance is implied by these files.
 
 The current local web adapter is `backend/research.py` plus `frontend/components/research-analysis.tsx`. It leaves the frozen benchmark sources unchanged.
+
+
+The current production website has been simplified to Dashboard, Production and
+AI analysis. Its optional general chat exposes only production and recorded
+abnormality tools. The independent frozen research harness, two tool algorithms,
+QA set and version 1.1 manifest remain unchanged.

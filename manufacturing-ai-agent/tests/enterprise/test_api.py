@@ -77,8 +77,10 @@ def test_invalid_filters(client, params):
 def test_missing_single_shift_and_demo_are_distinct(client):
     real = client.get("/api/dashboard/summary", params={"shift": "Night"}).json()
     assert real["summary"]["input_rolls"] is None and real["records"] == []
-    assert client.get("/api/dashboard/summary", params={"source": "demo"}).status_code == 422
-
+    assert (
+        client.get("/api/dashboard/summary", params={"source": "demo"}).status_code
+        == 422
+    )
 
 
 def test_capacity_rounding_yield_and_units(client):
@@ -201,8 +203,9 @@ def test_index_retrieve_citations_reindex_and_duplicates(client):
         json={"message": "What does the SOP cleaning checklist require?"},
     ).json()
     assert (
-        answer["mode"] == "local_retrieval"
-        and answer["sources"][0]["document_id"] == doc
+        answer["mode"] == "clarification"
+        and answer["tools"] == []
+        and answer["sources"] == []
     )
 
 
@@ -269,7 +272,7 @@ def test_chat_tools_no_key_and_no_fake_causes(client):
         headers=HEADERS,
         json={"message": "Capacity for 2 machines over 8 hours at CT 27 minutes?"},
     ).json()
-    assert r["calculations"]["estimated_cycles"] == 34
+    assert r["mode"] == "clarification" and r["calculations"] == {}
     no_input = client.post(
         "/api/agent/chat", headers=HEADERS, json={"message": "capacity at CT 27"}
     ).json()
@@ -298,6 +301,10 @@ def test_sdk_tool_selection_is_mocked_and_consent_is_enforced(client, monkeypatc
 
         async def fake(agent, **kw):
             assert kw["run_config"].tracing_disabled
+            assert {tool.name for tool in agent.tools} == {
+                "production_lookup",
+                "downtime_lookup",
+            }
             assert agent.tool_use_behavior == "stop_on_first_tool"
             assert agent.model_settings.store is False
             assert "PRIVATE" not in kw["input"]
@@ -339,7 +346,6 @@ def test_optional_fastmcp_shares_tools(client):
 def test_inventory_has_no_synthetic_stock(client):
     data = client.get("/api/inventory", params={"planned_quantity": 3000}).json()
     assert data["source"] == "unavailable" and data["items"] == []
-
 
 
 def test_zero_denominator_and_filtered_coverage(client, monkeypatch, tmp_path):
@@ -388,7 +394,7 @@ def test_abnormality_analysis_does_not_require_production(client):
     )
 
 
-def test_complex_capacity_needs_explicit_form(client):
+def test_retired_capacity_questions_are_not_routed_by_core_chat(client):
     result = client.post(
         "/api/agent/chat",
         headers=HEADERS,
@@ -414,7 +420,6 @@ def test_report_downloads_keep_scope_and_source(client):
     assert "2026-10-17" in text and "TEST-SPEC" in text and "PRIVATE" not in text
     demo = client.get("/api/reports/selection.pdf", params={"source": "demo"})
     assert demo.status_code == 422
-
 
 
 def test_pdf_text_location_citation(client):
@@ -499,3 +504,75 @@ def test_capacity_output_units_are_consistent(client):
         },
     )
     assert result.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Plan capacity for two machines",
+        "Check inventory",
+        "Read the SOP",
+        "Create a work order",
+        "查看库存",
+        "计算产能",
+    ],
+)
+def test_removed_chat_topics_have_no_model_or_legacy_tool_calls(client, message):
+    with (
+        patch("openai.AsyncOpenAI") as model,
+        patch("backend.agent.knowledge_answer") as knowledge,
+        patch("backend.agent.capacity_answer") as planning,
+    ):
+        response = client.post(
+            "/api/agent/chat",
+            headers=HEADERS,
+            json={"message": message, "use_llm": True, "allow_external": True},
+        )
+        assert response.status_code == 200
+        assert (
+            response.json()["mode"] == "clarification"
+            and response.json()["tools"] == []
+        )
+        model.assert_not_called()
+        knowledge.assert_not_called()
+        planning.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        {"document_ids": ["unused"]},
+        {"capacity": {"available_minutes": 480, "cycle_minutes": 30}},
+    ],
+)
+def test_removed_structured_chat_capabilities_are_not_executed(client, extra):
+    response = client.post(
+        "/api/agent/chat", headers=HEADERS, json={"message": "production", **extra}
+    )
+    assert response.status_code == 200 and response.json()["mode"] == "clarification"
+
+
+def test_core_chat_keeps_both_dates_in_a_question(client):
+    response = client.post(
+        "/api/agent/chat",
+        headers=HEADERS,
+        json={
+            "message": "Compare production from 2026-10-17 to 2026-10-18",
+            "scope": {"start": "2026-10-17", "end": "2026-10-20"},
+        },
+    )
+    assert response.status_code == 200, response.text
+    scope = response.json()["sources"][0]["scope"]
+    assert scope["start"] == "2026-10-17" and scope["end"] == "2026-10-18"
+
+
+def test_core_chat_rejects_reversed_question_dates(client):
+    response = client.post(
+        "/api/agent/chat",
+        headers=HEADERS,
+        json={
+            "message": "Compare production from 2026-10-18 to 2026-10-17",
+            "scope": {"start": "2026-10-17", "end": "2026-10-20"},
+        },
+    )
+    assert response.status_code == 422

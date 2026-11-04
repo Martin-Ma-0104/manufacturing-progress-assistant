@@ -12,31 +12,19 @@ import {
   LayoutDashboard,
   Bot,
   Factory,
-  CalendarRange,
-  Package,
-  Library,
-  Settings,
   PanelLeftClose,
   PanelLeftOpen,
   Moon,
   Sun,
-  Bell,
-  ChevronRight,
   Layers,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { api, query, Scope, Dashboard, Health, Answer } from "@/lib/api";
 const nav = [
   ["dashboard", "Dashboard", LayoutDashboard],
   ["ai-expert", "AI Production Expert", Bot],
   ["production", "Production Monitoring", Factory],
-  ["planning", "Production Planning", CalendarRange],
-  ["inventory", "Inventory Management", Package],
-  ["knowledge", "Knowledge Base", Library],
-  ["settings", "Settings", Settings],
 ] as const;
 type Message = { role: "user" | "assistant"; text: string; answer?: Answer };
 type State = {
@@ -207,18 +195,10 @@ export default function Workspace({ children }: { children: ReactNode }) {
             {!collapsed && (
               <span>
                 <strong className="block text-[15px]">Manufacturing AI</strong>
-                <small className="text-[10px] uppercase tracking-[2px] text-slate-400">
-                  Operations workspace
-                </small>
               </span>
             )}
           </Link>
           <div className="flex-1 space-y-1 p-3 pt-7">
-            {!collapsed && (
-              <p className="px-3 pb-3 text-[10px] tracking-[2px] text-slate-400">
-                WORKSPACE
-              </p>
-            )}
             {nav.map(([route, label, Icon]) => (
               <Link
                 key={route}
@@ -232,15 +212,7 @@ export default function Workspace({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </div>
-          {!collapsed && (
-            <div className="m-4 rounded-lg border border-white/10 p-4 text-xs leading-6 text-slate-400">
-              Local development
-              <br />
-              <span className="text-slate-200">
-                Historical data · Human decisions
-              </span>
-            </div>
-          )}
+
           <Button
             variant="ghost"
             className="m-3 text-slate-300 hover:bg-white/10 hover:text-white"
@@ -265,7 +237,7 @@ export default function Workspace({ children }: { children: ReactNode }) {
           />
         )}
         <div className={`${collapsed ? "lg:ml-20" : "lg:ml-64"}`}>
-          <header className="flex h-[76px] items-center justify-between gap-3 border-b border-border bg-card px-5 md:px-9">
+          <header className="flex h-14 items-center justify-between gap-3 border-b border-border bg-card px-5 md:px-9">
             <div className="flex items-center gap-3 text-xs muted">
               <Button
                 className="lg:hidden"
@@ -276,14 +248,8 @@ export default function Workspace({ children }: { children: ReactNode }) {
               >
                 <PanelLeftOpen size={18} />
               </Button>
-              <span className="hidden md:inline">Operations</span>
-              <ChevronRight size={13} />
-              <span className="font-medium text-foreground">{title}</span>
             </div>
             <div className="flex items-center gap-3">
-              <Badge variant="outline" className="hidden sm:inline-flex">
-                Local workspace
-              </Badge>
               <Button
                 variant="ghost"
                 size="icon"
@@ -292,48 +258,13 @@ export default function Workspace({ children }: { children: ReactNode }) {
               >
                 {dark ? <Sun size={18} /> : <Moon size={18} />}
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Notifications not connected"
-                title="Notifications are not connected"
-                onClick={() =>
-                  window.alert(
-                    "Notifications are a placeholder; no notification service is connected.",
-                  )
-                }
-              >
-                <Bell size={18} />
-              </Button>
-              <span
-                className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-semibold"
-                title="Local user placeholder; authentication not implemented"
-              >
-                M
-              </span>
             </div>
           </header>
           <main className="mx-auto max-w-[1640px] space-y-6 p-5 md:p-9">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <div className="eyebrow mb-2">
-                  Separator manufacturing / Slitting operations
-                </div>
                 <h1>{title}</h1>
-                <p className="mt-1 text-sm muted">
-                  A clear view of production, evidence and operating
-                  assumptions.
-                </p>
               </div>
-              <a
-                href="http://127.0.0.1:8502/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-xs muted"
-              >
-                <ExternalLink size={13} />
-                Streamlit fallback
-              </a>
             </div>
             <section
               className="panel grid grid-cols-2 gap-4 xl:grid-cols-5"
@@ -431,15 +362,6 @@ export default function Workspace({ children }: { children: ReactNode }) {
               </div>
             )}
             <div className="flex flex-wrap items-center gap-3 text-xs">
-              <strong>
-                {scope.start} — {scope.end}
-              </strong>
-              <span>
-                {scope.shift === "All"
-                  ? "All recorded shifts"
-                  : scope.shift + " shift"}
-              </span>
-              <span>· Up to 30 calendar dates</span>
               {[7, 30].map((days) => (
                 <Button
                   key={days}
@@ -459,11 +381,6 @@ export default function Workspace({ children }: { children: ReactNode }) {
               ))}
             </div>
             {children}
-            <footer className="border-t border-border pt-5 text-[11px] muted">
-              Manufacturing AI · Local development · No MES connection or
-              production authentication · Latest reviewed date:{" "}
-              {data?.last_recorded_date || "unavailable"}
-            </footer>
           </main>
         </div>
       </div>

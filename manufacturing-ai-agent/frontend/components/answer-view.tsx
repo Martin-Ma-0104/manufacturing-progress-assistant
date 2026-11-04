@@ -1,6 +1,5 @@
 "use client";
 import ReactMarkdown from "react-markdown";
-import { Badge } from "@/components/ui/badge";
 import { Answer } from "@/lib/api";
 import DataTable from "./data-table";
 import {
@@ -20,14 +19,6 @@ export default function AnswerView({ answer }: { answer: Answer }) {
   ) as Record<string, unknown>[];
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <Badge variant="outline">{answer.mode.replaceAll("_", " ")}</Badge>
-        {answer.tools.map((t) => (
-          <Badge key={t} variant="secondary">
-            ✓ {t}
-          </Badge>
-        ))}
-      </div>
       <div className="prose text-sm">
         <ReactMarkdown>{answer.summary}</ReactMarkdown>
       </div>
@@ -93,45 +84,43 @@ export default function AnswerView({ answer }: { answer: Answer }) {
           />
         </div>
       )}
-      {answer.potential_causes.map((s) => (
-        <p key={s} className="note">
-          {s}
-        </p>
-      ))}
-      {answer.recommendations.length > 0 && (
-        <div>
-          <h3>Review recommendations</h3>
-          <ul className="mt-2 space-y-1 text-sm muted">
-            {answer.recommendations.map((s) => (
-              <li key={s}>• {s}</li>
+      <details className="note">
+        <summary>Sources and details</summary>{" "}
+        {answer.recommendations.length > 0 && (
+          <div>
+            <h3>Review recommendations</h3>
+            <ul className="mt-2 space-y-1 text-sm muted">
+              {answer.recommendations.map((s) => (
+                <li key={s}>• {s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {answer.sources.length > 0 && (
+          <div>
+            <h3 className="mb-2">Evidence and citations</h3>
+            {answer.sources.map((s, i) => (
+              <div
+                key={s.chunk_id || i}
+                className="mb-2 rounded-lg border border-border p-3 text-sm"
+              >
+                <strong>
+                  [{i + 1}] {s.name}
+                </strong>
+                {s.location && <span className="ml-2 muted">{s.location}</span>}
+                {s.quote && (
+                  <blockquote className="mt-2 whitespace-pre-wrap text-xs muted">
+                    {s.quote}
+                  </blockquote>
+                )}
+                {s.scope && (
+                  <p className="text-xs muted">{JSON.stringify(s.scope)}</p>
+                )}
+              </div>
             ))}
-          </ul>
-        </div>
-      )}
-      {answer.sources.length > 0 && (
-        <div>
-          <h3 className="mb-2">Evidence and citations</h3>
-          {answer.sources.map((s, i) => (
-            <div
-              key={s.chunk_id || i}
-              className="mb-2 rounded-lg border border-border p-3 text-sm"
-            >
-              <strong>
-                [{i + 1}] {s.name}
-              </strong>
-              {s.location && <span className="ml-2 muted">{s.location}</span>}
-              {s.quote && (
-                <blockquote className="mt-2 whitespace-pre-wrap text-xs muted">
-                  {s.quote}
-                </blockquote>
-              )}
-              {s.scope && (
-                <p className="text-xs muted">{JSON.stringify(s.scope)}</p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+          </div>
+        )}
+      </details>{" "}
       {answer.assumptions.length > 0 && (
         <details className="note">
           <summary>Data sources, assumptions and limits</summary>

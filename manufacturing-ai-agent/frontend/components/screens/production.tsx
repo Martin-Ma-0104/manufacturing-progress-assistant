@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { fmt, query } from "@/lib/api";
 import { useWorkspace } from "../workspace";
 import DataTable from "../data-table";
@@ -15,10 +14,7 @@ export default function Production({ machine }: { machine?: string }) {
           Loading production records…
         </p>
       )}
-      <div className="note">
-        Historical production only. Current machine state and cycle time require
-        a real equipment feed; neither is inferred from output.
-      </div>
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {data?.machines.map((m) => (
           <Link
@@ -35,15 +31,11 @@ export default function Production({ machine }: { machine?: string }) {
               <h2>{m.machine_id}</h2>
               <ArrowUpRight size={16} />
             </div>
-            <Badge variant="secondary" className="my-3">
-              {m.status}
-            </Badge>
+
             <div className="text-2xl font-semibold">
               {fmt(m.qualified_output_m2, "m²")}
             </div>
-            <p className="mt-2 text-xs muted">
-              Qualified area · {m.record_count} records
-            </p>
+            <p className="mt-2 text-xs muted">Qualified area</p>
             <p className="mt-4 text-sm">
               Plan attainment{" "}
               <strong className="float-right">{m.attainment}</strong>

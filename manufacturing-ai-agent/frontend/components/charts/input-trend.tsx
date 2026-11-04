@@ -47,7 +47,6 @@ export default function InputTrend({
   start,
   end,
   machine,
-  shift,
 }: {
   daily: readonly DailyInput[];
   events: readonly ChangeEvent[];
@@ -166,12 +165,10 @@ export default function InputTrend({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2>Planned vs. actual input{machine ? ` · ${machine}` : ""}</h2>
-          <p className="text-xs muted mt-1">
-            Mother rolls · {machine || "All selected machines"} ·{" "}
-            {shift === "All" ? "All recorded shifts" : shift + " shift"} ·{" "}
-            {points.length} / {window.days} dates recorded
-          </p>
+          <h2>
+            Planned vs. actual input (mother rolls)
+            {machine ? ` · ${machine}` : ""}
+          </h2>
         </div>
       </div>
       <div className="input-trend-legend">
@@ -361,27 +358,21 @@ export default function InputTrend({
               className="input-trend-axis-note"
               style={{ paddingLeft: bounds.left }}
             >
-              Production date · MM-DD
+              Date
             </div>
           </div>
         </div>
       )}
-      <p className="text-xs muted mt-3">
-        Recorded dates are connected across gaps; missing dates have no points.
-        Hover over a recorded date for both values.
-        {!machine
-          ? " Select one machine for confirmed changeover markers."
-          : ""}
-        {window.days > 7
-          ? " Every recorded value is labeled; blue numbers are actual input and slate numbers are planned input. Scroll horizontally when needed."
-          : ""}
-      </p>
-      <p className="text-xs muted mt-2">
-        {coverage.first
-          ? `Current filter: first record ${coverage.first} · last record ${coverage.last}.`
-          : "Current filter: no recorded input values."}
-        {` ${coverage.missingDates.length} / ${window.days} dates have no input records; missing records are not zero production.`}
-      </p>
+
+      <details className="input-trend-details">
+        <summary>Data coverage</summary>{" "}
+        <p className="text-xs muted mt-2">
+          {coverage.first
+            ? `Current filter: first record ${coverage.first} · last record ${coverage.last}.`
+            : "Current filter: no recorded input values."}
+          {` ${coverage.missingDates.length} / ${window.days} dates have no input records; missing records are not zero production.`}
+        </p>
+      </details>
       <details className="input-trend-details">
         <summary>View all recorded values ({points.length} dates)</summary>
         <p className="text-xs muted my-3">

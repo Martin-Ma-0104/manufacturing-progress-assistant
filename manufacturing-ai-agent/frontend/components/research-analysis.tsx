@@ -119,7 +119,7 @@ export default function ResearchAnalysis() {
           aria-pressed={task === "inputs"}
           onClick={() => setTask("inputs")}
         >
-          Input comparison
+          Input comparison (mother rolls)
         </Button>
         <Button
           variant={task === "abnormalities" ? "default" : "outline"}
@@ -166,16 +166,13 @@ export default function ResearchAnalysis() {
             ).map(([label, number]) => (
               <div key={label} className="research-metric">
                 <p className="text-xs muted">{label}</p>
-                <strong>{fmt(number)}</strong>
-                <span className="text-xs muted">input mother rolls</span>
+                <strong>
+                  {number === null ? fmt(number) : `${fmt(number)} rolls`}
+                </strong>
               </div>
             ))}
           </div>
-          <div className="text-sm space-y-2">
-            {value.input_explanation.map((text) => (
-              <p key={text}>{text}</p>
-            ))}
-          </div>
+
           {input.by_machine.length ? (
             <>
               <h3>Input by machine · mother rolls</h3>
@@ -198,11 +195,7 @@ export default function ResearchAnalysis() {
               No production records in this scope. Values are unavailable.
             </p>
           )}
-          <p className="text-xs muted">
-            Recorded dates: {input.recorded_dates.length} · Missing dates:{" "}
-            {input.missing_dates.length}. Missing observations remain
-            unavailable.
-          </p>
+
           {!!input.missing_dates.length && (
             <details className="note">
               <summary>Missing production dates</summary>
@@ -211,6 +204,10 @@ export default function ResearchAnalysis() {
           )}
           <details className="note">
             <summary>Input definitions and coverage</summary>
+            <p className="mt-2">
+              {input.recorded_dates.length} recorded dates;{" "}
+              {input.missing_dates.length} dates without records.
+            </p>
             <ul className="mt-2 space-y-2">
               {input.warnings.map((text) => (
                 <li key={text}>{text}</li>
@@ -220,16 +217,6 @@ export default function ResearchAnalysis() {
         </div>
       ) : events ? (
         <div className="mt-5 space-y-5">
-          <p className="note">
-            Recorded event-minutes can overlap. This ranking uses known recorded
-            subtotals and does not represent net downtime or machine
-            performance.
-          </p>
-          <div className="text-sm space-y-2">
-            {value.abnormality_explanation.map((text) => (
-              <p key={text}>{text}</p>
-            ))}
-          </div>
           {events.rankings.length ? (
             <>
               <h3>Known abnormality duration · recorded event-minutes</h3>
@@ -245,7 +232,7 @@ export default function ResearchAnalysis() {
                   overlap_events: r.overlap_event_count,
                   coverage: r.partial
                     ? "Partial known subtotal"
-                    : "Known minutes for recorded events",
+                    : "Known subtotal",
                 }))}
               />
             </>

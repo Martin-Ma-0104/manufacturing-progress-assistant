@@ -130,10 +130,6 @@ export default function ProductionEntry({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2>Real production records / 真实生产记录</h2>
-          <p className="mt-1 text-sm muted">
-            Enter verified figures from a production report. Blank values are
-            not treated as zero.
-          </p>
         </div>
         <Button
           type="button"
@@ -151,12 +147,15 @@ export default function ProductionEntry({
       )}
       {open && (
         <form id="entry-form" onSubmit={submit} className="space-y-5">
-          <p className="note">
-            One row = production date + shift + machine + product. Use the
-            report’s confirmed production date; do not automatically move night
-            shifts to another day. This form adds records; it never overwrites
-            an existing record.
-          </p>
+          <details className="note">
+            <summary>Entry guidance</summary>{" "}
+            <p className="note">
+              One row = production date + shift + machine + product. Use the
+              report’s confirmed production date; do not automatically move
+              night shifts to another day. This form adds records; it never
+              overwrites an existing record.
+            </p>
+          </details>
           <fieldset
             disabled={busy}
             className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
@@ -268,9 +267,6 @@ export default function ProductionEntry({
                 required
                 maxLength={256}
               />
-              <p className="mt-1 text-xs muted">
-                A report name or reference; no file upload needed.
-              </p>
             </div>
             <div className="md:col-span-2 xl:col-span-3">
               <label htmlFor="entry-notes">

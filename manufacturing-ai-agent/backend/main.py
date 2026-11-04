@@ -235,7 +235,7 @@ def search(value: SearchInput):
 @app.post("/api/agent/chat", response_model=ChatResponse)
 async def chat(value: ChatInput):
     try:
-        return await answer(value)
+        return await answer(value, core_only=True)
     except ValueError as e:
         raise HTTPException(422, str(e)) from None
     except Exception:

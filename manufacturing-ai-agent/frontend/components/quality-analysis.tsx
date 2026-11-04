@@ -38,8 +38,8 @@ function AreaBars({
   const maximum = Math.max(...groups.map((g) => Number(g.rejected_area_m2)), 0);
   return (
     <section className="panel">
-      <h3>{title}</h3>
-      <p className="text-xs muted mt-1">Recorded rejected area (m²)</p>
+      <h3>{title} (m²)</h3>
+
       <ul className="quality-bars" aria-label={title}>
         {groups.map((g) => (
           <li key={g.label}>
@@ -130,11 +130,8 @@ function QualityTrend({ value }: { value: QualitySummary }) {
   }
   return (
     <section className="panel">
-      <h3>Recorded rejected-area trend</h3>
-      <p className="text-xs muted mt-1">
-        {value.recorded_dates.length} / {window.days} dates have quality records
-        · m²
-      </p>
+      <h3>Recorded rejected-area trend (m²)</h3>
+
       <div
         className="quality-trend-scroll"
         tabIndex={0}
@@ -186,10 +183,7 @@ function QualityTrend({ value }: { value: QualitySummary }) {
           </ResponsiveContainer>
         </div>
       </div>
-      <p className="text-xs muted">
-        Production date · MM-DD. Recorded dates are connected across gaps;
-        missing dates have no points.
-      </p>
+
       <details className="input-trend-details">
         <summary>View recorded daily values</summary>
         <div className="mt-3">
@@ -230,17 +224,7 @@ export function QualityView({ value }: { value: QualitySummary }) {
           </section>
         ))}
       </div>
-      <p className="text-xs muted">
-        {value.scope.start} – {value.scope.end} ·{" "}
-        {value.scope.shift === "All"
-          ? "All shifts"
-          : `${value.scope.shift} shift`}{" "}
-        · {value.scope.machine || "All machines"} ·{" "}
-        {value.scope.product || "All products"}.{" "}
-        {value.recorded_shifts.join(" / ")} recorded;{" "}
-        {value.recorded_dates.length} dates with entries. Coverage may be
-        incomplete.
-      </p>
+
       <div className="grid gap-6 xl:grid-cols-2">
         <AreaBars title="Rejected area by machine" groups={value.by_machine} />
         <AreaBars
@@ -252,6 +236,18 @@ export function QualityView({ value }: { value: QualitySummary }) {
       <details className="note">
         <summary>Quality definitions and coverage</summary>
         <div className="mt-3 space-y-2">
+          {" "}
+          <p className="text-xs muted">
+            {value.scope.start} – {value.scope.end} ·{" "}
+            {value.scope.shift === "All"
+              ? "All shifts"
+              : `${value.scope.shift} shift`}{" "}
+            · {value.scope.machine || "All machines"} ·{" "}
+            {value.scope.product || "All products"}.{" "}
+            {value.recorded_shifts.join(" / ")} recorded;{" "}
+            {value.recorded_dates.length} dates with entries. Coverage may be
+            incomplete.
+          </p>
           <p>
             Amounts are recorded nonconforming-film area in m². Detail records
             are not a roll count. Original quantities are retained, including
