@@ -109,11 +109,6 @@ export default function ResearchAnalysis() {
       aria-labelledby="research-title"
     >
       <h2 id="research-title">Verified production analysis</h2>
-      <p className="text-sm mt-4">
-        {scope.start || "Select start date"} → {scope.end || "Select end date"}{" "}
-        · {scope.machine || "All recorded machines"} ·{" "}
-        {scope.shift === "All" ? "All shifts" : `${scope.shift} shift`}
-      </p>
       <div
         className="flex flex-wrap gap-2 mt-4"
         role="group"
