@@ -4,7 +4,6 @@ import { api, query, type ResearchAnalysis as Analysis } from "@/lib/api";
 import { useWorkspace } from "./workspace";
 import DataTable from "./data-table";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
 
 const fmt = (value: number | null) =>
   value === null
@@ -109,15 +108,7 @@ export default function ResearchAnalysis() {
       id="research-analysis"
       aria-labelledby="research-title"
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 id="research-title">Verified production analysis</h2>
-          <p className="text-xs muted mt-1">
-            Reviewed SQLite records · calculated locally · no model request
-          </p>
-        </div>
-        <Badge variant="outline">Read-only analysis</Badge>
-      </div>
+      <h2 id="research-title">Verified production analysis</h2>
       <p className="text-sm mt-4">
         {scope.start || "Select start date"} → {scope.end || "Select end date"}{" "}
         · {scope.machine || "All recorded machines"} ·{" "}
