@@ -265,3 +265,122 @@ th {
 .machine-records-details summary {
   font-size: 16px;
 }
+
+/* Quality bars keep complete labels/values in normal flow, outside plot areas. */
+.quality-bars {
+  margin-top: 20px;
+  padding: 0 6px 0 0;
+  max-height: 420px;
+  overflow-y: auto;
+  list-style: none;
+}
+.quality-bars li {
+  margin-bottom: 18px;
+}
+.quality-bar-label {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 5px 14px;
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+.quality-bar-label span {
+  overflow-wrap: anywhere;
+  flex: 1 1 160px;
+}
+.quality-bar-label strong {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+.quality-bar-track {
+  height: 15px;
+  background: var(--secondary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.quality-bar-track > div {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+}
+.quality-trend-scroll {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+.quality-point-label {
+  font-size: 11px;
+  fill: var(--primary);
+  stroke: var(--card);
+  stroke-width: 4px;
+  paint-order: stroke;
+}
+.quality-analysis summary {
+  cursor: pointer;
+}
+
+/* Scoped, text-first research charts; all values remain in the adjacent tables. */
+.research-analysis {
+  scroll-margin-top: 24px;
+}
+.research-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.research-metric strong {
+  font-size: 24px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.research-bars {
+  display: grid;
+  gap: 20px;
+  padding: 0;
+  list-style: none;
+}
+.research-bars h4 {
+  margin-bottom: 8px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.research-bar-row {
+  display: grid;
+  grid-template-columns: 100px minmax(30px, 1fr) minmax(48px, auto);
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.research-bar-row strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.research-bar-track {
+  min-width: 0;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--secondary);
+  overflow: hidden;
+}
+.research-bar-track > div {
+  height: 100%;
+  border-radius: 3px;
+}
+.research-bar-track .actual {
+  background: var(--primary);
+}
+.research-bar-track .plan {
+  background: #8293a9;
+}
+@media (max-width: 480px) {
+  .research-bar-row {
+    grid-template-columns: 82px minmax(20px, 1fr) minmax(36px, auto);
+    gap: 6px;
+  }
+}

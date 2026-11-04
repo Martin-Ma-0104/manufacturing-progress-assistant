@@ -1,0 +1,96 @@
+[
+  {
+    "name": "compare_production_inputs",
+    "description": "Compare planned/actual input mother rolls, differences and shortfalls for explicit dates.",
+    "parameters": {
+      "properties": {
+        "start_date": {
+          "title": "Start Date",
+          "type": "string"
+        },
+        "end_date": {
+          "title": "End Date",
+          "type": "string"
+        },
+        "machine_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Machine Id"
+        },
+        "shift": {
+          "default": "All",
+          "enum": [
+            "All",
+            "Day",
+            "Night"
+          ],
+          "title": "Shift",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_date",
+        "end_date",
+        "machine_id",
+        "shift"
+      ],
+      "title": "compare_production_inputs_args",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "strict": true
+  },
+  {
+    "name": "rank_abnormality_duration",
+    "description": "Rank known recorded abnormality event-minutes, with missing/overlap/status diagnostics; never net downtime.",
+    "parameters": {
+      "properties": {
+        "start_date": {
+          "title": "Start Date",
+          "type": "string"
+        },
+        "end_date": {
+          "title": "End Date",
+          "type": "string"
+        },
+        "machine_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Machine Id"
+        },
+        "shift": {
+          "default": "All",
+          "enum": [
+            "All",
+            "Day",
+            "Night"
+          ],
+          "title": "Shift",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start_date",
+        "end_date",
+        "machine_id",
+        "shift"
+      ],
+      "title": "rank_abnormality_duration_args",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "strict": true
+  }
+]

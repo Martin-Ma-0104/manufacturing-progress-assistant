@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {
   BarChart,
   Bar,
@@ -19,6 +20,21 @@ import { fmt, query } from "@/lib/api";
 import { useWorkspace } from "../workspace";
 import DataTable from "../data-table";
 import InputTrend from "../charts/input-trend";
+
+function range(
+  lower: number | null | undefined,
+  upper: number | null | undefined,
+  factor = 1,
+  suffix = "",
+) {
+  if (lower == null || upper == null) return "Not available";
+  if (Math.abs(lower - upper) < 1e-8) return fmt(lower * factor) + suffix;
+  // Round outwards so display precision never narrows the assumed range.
+  const a = fmt(Math.floor(lower * factor * 10 + 1e-8) / 10),
+    b = fmt(Math.ceil(upper * factor * 10 - 1e-8) / 10);
+  return `${a}–${b}${suffix}`;
+}
+
 export default function Dashboard() {
   const { data, scope, loading, refresh } = useWorkspace();
   if (loading)
@@ -31,6 +47,7 @@ export default function Dashboard() {
     );
   if (!data) return null;
   const s = data.summary;
+  const runtime = data.runtime_estimate;
   const kpis = [
     [
       "Planned input",
@@ -53,9 +70,13 @@ export default function Dashboard() {
       "Area of qualified finished production",
     ],
     [
-      "Average cycle time",
-      "Not available",
-      "Measured cycle records are not connected",
+      "Estimated runtime",
+      range(
+        runtime.runtime_lower_minutes,
+        runtime.runtime_upper_minutes,
+        1 / 60,
+      ),
+      "Machine-hours · 12 h shifts − 2 h flexible breaks",
     ],
     [
       "Abnormality records",
@@ -63,9 +84,9 @@ export default function Dashboard() {
       "Event-minute sum; not net downtime",
     ],
     [
-      "Machine utilization",
-      "Not available",
-      "Runtime and available time are required",
+      "Estimated utilization",
+      range(runtime.utilization_lower, runtime.utilization_upper, 100, "%"),
+      "Range reflects unknown break/stop overlap",
     ],
     [
       "Estimated capacity",
@@ -93,6 +114,14 @@ export default function Dashboard() {
     });
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Link
+          className="text-sm text-primary underline underline-offset-4"
+          href={`/ai-expert?${query(scope)}#research-analysis`}
+        >
+          Open verified input and abnormality analysis →
+        </Link>
+      </div>
       <div className="flex items-center justify-between">
         <span className="text-xs muted">
           {s.machine_count} recorded machines · {data.records.length} production
@@ -132,6 +161,47 @@ export default function Dashboard() {
           </Card>
         ))}
       </div>
+      <details className="note">
+        <summary>
+          Runtime estimate assumptions · {runtime.observed_shift_count}{" "}
+          record-evidenced machine shifts
+        </summary>
+        <div className="mt-3 space-y-2 text-xs">
+          {runtime.reason && <p>{runtime.reason}</p>}
+          <p>
+            Assumed availability:{" "}
+            {fmt(
+              runtime.available_minutes == null
+                ? null
+                : runtime.available_minutes / 60,
+              "machine-hours",
+            )}
+            . {runtime.unrecorded_shift_count} unrecorded machine shifts
+            excluded; these are not confirmed unscheduled shifts.
+          </p>
+          <p>
+            Merged stop intervals before break overlap:{" "}
+            {fmt(runtime.merged_stop_minutes, "min")}.{" "}
+            {runtime.no_recorded_stop_shift_count} covered shifts have no
+            positive recorded stop interval; unrecorded stops remain unknown.
+          </p>
+          {runtime.invalid_event_count > 0 && (
+            <p>
+              {runtime.invalid_event_count} incomplete or contradictory events
+              block affected estimates.
+            </p>
+          )}
+          {runtime.assumptions.map((item) => (
+            <p key={item}>{item}</p>
+          ))}
+          <p>
+            Reported abnormality totals retain source dates and shift labels.
+            Estimates use clock-based shifts and can therefore differ. Product
+            filters do not allocate machine time to products. Ranges describe
+            assumptions, not measured runtime, OEE or demonstrated capacity.
+          </p>
+        </div>
+      </details>
       <InputTrend
         daily={data.daily}
         events={data.changeovers}
@@ -273,6 +343,17 @@ export default function Dashboard() {
               area_qualification: m.qualification,
               event_minutes: m.abnormalities.reported_minutes,
               cycle_minutes: m.cycle_minutes,
+              estimated_runtime_hours: range(
+                m.runtime_estimate?.runtime_lower_minutes,
+                m.runtime_estimate?.runtime_upper_minutes,
+                1 / 60,
+              ),
+              estimated_utilization: range(
+                m.runtime_estimate?.utilization_lower,
+                m.runtime_estimate?.utilization_upper,
+                100,
+                "%",
+              ),
             }))}
           />
         </div>

@@ -1,5 +1,6 @@
 """Local FastAPI facade over the existing shared Python layer."""
 
+import sqlite3
 import logging
 import os
 from typing import Annotated
@@ -9,6 +10,8 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from .models import (
     Scope,
+    ProductionEntry,
+    ProductionEntryResult,
     CapacityInput,
     ScenarioInput,
     ChatInput,
@@ -26,16 +29,22 @@ from .models import (
     SearchResponse,
     InventoryResponse,
     DowntimeResponse,
+    QualitySummary,
+    QualityRecords,
+    QualityPageScope,
 )
-from . import data, knowledge
+from . import data, knowledge, quality
 from .calculations import calculate_capacity, forecast_production, compare_scenarios
 from .agent import answer
+from .research import router as research_router
 
 app = FastAPI(
     title="Manufacturing Operations API",
     version="0.1.0",
-    description="Local development only. Historical reviewed records and isolated demonstrations. No authentication or live equipment integration yet.",
+    description="Local development only. Reviewed actual records and human-confirmed production entry. No authentication or live equipment integration yet.",
 )
+app.include_router(research_router)
+
 origins = [
     s.strip()
     for s in os.getenv(
@@ -104,8 +113,10 @@ def health():
 
 @app.get("/api/production/options", response_model=OptionsResponse)
 def options(source: str = "reviewed"):
-    if source not in ("reviewed", "demo"):
-        raise HTTPException(422, "Invalid source.")
+    if source != "reviewed":
+        raise HTTPException(
+            422, "Only reviewed actual production is available on this website."
+        )
     return data.options(source)
 
 
@@ -122,6 +133,17 @@ def production(scope: Annotated[Scope, Query()]):
 @app.get("/api/production/machines", response_model=MachinesResponse)
 def machines(scope: Annotated[Scope, Query()]):
     return dict(machines=safe(data.dashboard, scope)["machines"], source=scope.source)
+
+
+@app.get("/api/production/quality", response_model=QualitySummary)
+def quality_summary(scope: Annotated[Scope, Query()]):
+    return safe(quality.summary, scope)
+
+
+@app.get("/api/production/quality/records", response_model=QualityRecords)
+def quality_records(scope: Annotated[QualityPageScope, Query()]):
+    filters = Scope(**scope.model_dump(exclude={"offset", "limit"}))
+    return safe(quality.records, filters, scope.offset, scope.limit)
 
 
 @app.get("/api/production/machines/{machine_id}", response_model=SummaryResponse)
@@ -155,25 +177,9 @@ def compare(value: ScenarioInput):
 @app.get("/api/inventory", response_model=InventoryResponse)
 def inventory(planned_quantity: float = Query(default=0, ge=0, le=1000000)):
     return dict(
-        source="synthetic_demo",
-        warning="SYNTHETIC planning example; ERP/MES inventory is not connected.",
-        items=[
-            dict(
-                material_id="DEMO-RESIN",
-                name="Demo resin",
-                category="Raw material",
-                on_hand=1200,
-                reserved=200,
-                available=1000,
-                safety_stock=250,
-                unit="kg",
-                usage_per_finished_roll=0.5,
-                estimated_consumption_kg=planned_quantity * 0.5,
-                shortage_kg=max(planned_quantity * 0.5 - 1000, 0),
-                coverage_finished_roll_equivalent=2000,
-                below_demo_safety_stock=False,
-            )
-        ],
+        source="unavailable",
+        warning="Actual inventory is not connected. No synthetic stock or material quantities are shown.",
+        items=[],
     )
 
 
@@ -277,3 +283,20 @@ def selection_pdf(scope: Annotated[Scope, Query()]):
             "Content-Disposition": 'attachment; filename="production-selection.pdf"'
         },
     )
+
+
+@app.post("/api/production/records", response_model=ProductionEntryResult)
+def create_production_record(value: ProductionEntry):
+    from .production_entry import EntryConflict, save_entry
+
+    try:
+        return save_entry(value)
+    except EntryConflict as exc:
+        raise HTTPException(409, str(exc)) from None
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
+    except sqlite3.OperationalError:
+        raise HTTPException(
+            503,
+            "The production database is unavailable or busy. No success was confirmed; retry the same record after checking the local service.",
+        ) from None

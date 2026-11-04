@@ -68,3 +68,12 @@ Updating the existing tracked `main` branch may trigger a Streamlit rebuild.
 Cloud SQLite files remain temporary; confirm private access before restoring
 reviewed data. Source publication alone does not verify cloud state or restore
 local production history.
+
+
+## Local research view
+
+The Next.js AI Production Expert page now includes verified input comparison and
+recorded abnormality-duration ranking through `/api/research/analysis`. This is a
+local read-only feature and does not change the Streamlit entrypoint or load its
+cloud database with Mac records. Publishing source can trigger the existing
+Streamlit rebuild; it does not create external hosting for the Next.js/FastAPI UI.

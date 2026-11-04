@@ -3,16 +3,19 @@
 from datetime import date, timedelta
 import os
 from pathlib import Path
+from contextlib import closing
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 import abnormality
+import slitting_quality
 from ai_production_data import catalog, normalize_scope, read_snapshot
 from production_dashboard import summarize, coverage_text
 from .models import Scope
 from .calculations import analyze_downtime
+from .runtime import estimate_runtime, read_runtime_estimate
 
 
 def db_path():
@@ -63,21 +66,29 @@ def options(source="reviewed"):
     c = catalog(db_path())
     # Keep real FX8, while requested FX1-FX7 without records remain explicitly unconnected.
     ids = sorted(set(c["machines"]) | {f"FX{n}" for n in range(1, 8)})
-    products = []
-    if c["dates"]:
-        import sqlite3
+    products, dates = set(), set(c["dates"])
+    import sqlite3
 
-        with sqlite3.connect(db_path().as_uri() + "?mode=ro", uri=True) as db:
-            if db.execute(
-                "SELECT 1 FROM sqlite_master WHERE name='slitting_records'"
-            ).fetchone():
-                products = [
-                    r[0]
-                    for r in db.execute(
-                        "SELECT DISTINCT product FROM slitting_records ORDER BY product"
-                    )
-                ]
-    return dict(dates=c["dates"], machines=ids, products=products)
+    with closing(sqlite3.connect(db_path().as_uri() + "?mode=ro", uri=True)) as db:
+        db.execute("PRAGMA query_only=ON")
+        db.execute("BEGIN")
+        if db.execute(
+            "SELECT 1 FROM sqlite_master WHERE name='slitting_records' AND type='table'"
+        ).fetchone():
+            products.update(
+                r[0]
+                for r in db.execute("SELECT DISTINCT product FROM slitting_records")
+            )
+        if slitting_quality.has_table(db):
+            for day, machine, product in db.execute(
+                "SELECT DISTINCT production_date,machine_id,product FROM slitting_rejects"
+            ):
+                dates.add(day)
+                ids.append(machine)
+                products.add(product)
+    return dict(
+        dates=sorted(dates), machines=sorted(set(ids)), products=sorted(products)
+    )
 
 
 def snapshot(scope: Scope):
@@ -175,6 +186,30 @@ def snapshot(scope: Scope):
 
 def dashboard(scope: Scope):
     rows, events, changes, s, warnings, opts = snapshot(scope)
+    if scope.source == "demo":
+        runtime = estimate_runtime(
+            demo_rows(),
+            events,
+            s["start"],
+            s["end"],
+            shift=scope.shift,
+            machines=[scope.machine] if scope.machine else opts["machines"],
+            source="demo",
+        )
+    elif db_path().is_file():
+        runtime = read_runtime_estimate(
+            db_path(), s["start"], s["end"], shift=scope.shift, machine=scope.machine
+        )
+    else:
+        runtime = estimate_runtime(
+            [],
+            [],
+            s["start"],
+            s["end"],
+            shift=scope.shift,
+            machines=[scope.machine] if scope.machine else [],
+        )
+    runtime_machines = {r["machine_id"]: r for r in runtime["per_machine"]}
     total = summarize(rows)
     if not rows:
         for field in (
@@ -212,6 +247,7 @@ def dashboard(scope: Scope):
                 abnormalities=abnormality.summarize(
                     [e for e in events if e["machine_id"] == machine]
                 ),
+                runtime_estimate=runtime_machines.get(machine),
             )
         )
     return dict(
@@ -231,4 +267,5 @@ def dashboard(scope: Scope):
         changeovers=changes,
         warnings=warnings,
         last_recorded_date=opts["dates"][-1] if opts["dates"] else None,
+        runtime_estimate=runtime,
     )

@@ -49,6 +49,7 @@ type State = {
   messages: Message[];
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   refresh: () => void;
+  refreshVersion: number;
 };
 const Context = createContext<State | null>(null);
 export function useWorkspace() {
@@ -85,10 +86,9 @@ export default function Workspace({ children }: { children: ReactNode }) {
     const isDark = localStorage.getItem("manufacturing-theme") === "dark";
     setDark(isDark);
     document.documentElement.classList.toggle("dark", isDark);
-    const q = new URLSearchParams(window.location.search);
     setScope((s) => ({
       ...s,
-      source: q.get("source") === "demo" ? "demo" : "reviewed",
+      source: "reviewed",
     }));
     setReady(true);
     api<Health>("/health")
@@ -190,6 +190,7 @@ export default function Workspace({ children }: { children: ReactNode }) {
         messages,
         setMessages,
         refresh: () => setVersion((v) => v + 1),
+        refreshVersion: version,
       }}
     >
       <div className="min-h-screen">
@@ -335,32 +336,9 @@ export default function Workspace({ children }: { children: ReactNode }) {
               </a>
             </div>
             <section
-              className="panel grid grid-cols-2 gap-4 xl:grid-cols-6"
+              className="panel grid grid-cols-2 gap-4 xl:grid-cols-5"
               aria-label="Production filters"
             >
-              <div>
-                <label htmlFor="data-source">Data source</label>
-                <select
-                  id="data-source"
-                  value={scope.source}
-                  onChange={(e) => {
-                    const next = {
-                      ...scope,
-                      source: e.target.value as Scope["source"],
-                      start: "",
-                      end: "",
-                      machine: "",
-                      product: "",
-                    };
-                    setScope(next);
-                    if (pathname.startsWith("/production/"))
-                      router.push("/production?" + query(next));
-                  }}
-                >
-                  <option value="reviewed">Reviewed history</option>
-                  <option value="demo">Synthetic demo</option>
-                </select>
-              </div>
               <div>
                 <label htmlFor="start">From</label>
                 <Input
@@ -438,12 +416,6 @@ export default function Workspace({ children }: { children: ReactNode }) {
                 </select>
               </div>
             </section>
-            {scope.source === "demo" && (
-              <div className="note font-semibold">
-                SYNTHETIC DEMONSTRATION — all production in this mode is
-                artificial, not company records.
-              </div>
-            )}
             {error && (
               <div
                 role="alert"

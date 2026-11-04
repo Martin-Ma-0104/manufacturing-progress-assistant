@@ -1,0 +1,64 @@
+{
+  "version": "1.0",
+  "frozen_before_live_testing": true,
+  "model": "gpt-6-sol",
+  "immutable_model_snapshot_available": false,
+  "reasoning": "none",
+  "service_tier": "default",
+  "as_of": "2026-01-12",
+  "files": {
+    "contracts.py": "26333865a1854956d2648479e006e4b47ff71f89d9cc95b01b588887c5300708",
+    "tool_definitions.json": "d79707b44d037b497d6c17645aac67d63d347402e4ff46f4579ab80bd745f548",
+    "fixtures.py": "b811d0c9f8a8ef391d4ff187e4cf116b28551e553cf9d65277e973202d86cbda",
+    "tools.py": "a2673f2c4126988763f3a0165f9c34e847f387892d098003228e255e1d3c091e",
+    "agent.py": "f2576d7c2397fd4ac18df87b83afe73b2a222a0f3a64e61107daef730ad20abf",
+    "evaluation.py": "ab3d59e96705fd760267631281b5551921cdf9611e3d3a800650b96f641d87cb",
+    "case_design.py": "17ef8518e25e74a964932d8d33042cadeffa915265fadbae531c8d2db498b7dd",
+    "evaluation_cases.json": "b064238960dfb9bcfcc30a3fdc430e31162b184fc7b75e3e28dd76bfe9fa07a6",
+    "QA.md": "1c60da615cc21a358cc3a0d5ef47d05be31e973693ebdacd0dc5705326073a29",
+    "fixtures_source.json": "6302d181d201f94af48714fa68a7f713326f908c89b85aa04fdfb4496bb81471"
+  },
+  "datasets": {
+    "A": {
+      "filename": "sample_a.db",
+      "sha256": "d008b2679974573ad84b8a9cf258926be4138d65d03eb668d0a3c6efc754e22c",
+      "logical_sha256": "d715154f11b00fccb7bff21b041f9c380985c755b1f0c67a0c1afa8c655ff9b6"
+    },
+    "B": {
+      "filename": "sample_b.db",
+      "sha256": "723c0833fbe6ce8023da7b60a6654d0929a1b6fd9733cc0ba150226b01ac6d16",
+      "logical_sha256": "0d4a372be107559351e4a8df5c29b1a5adaae4639b09582012f345a352547d52"
+    }
+  },
+  "shared_files": {
+    "ai_production_data.py": "aed55b65cbd121a10ddd06409b2d4e67f85ab6963057f3f3929e536167655918",
+    "production_diagnostics.py": "d09dce72b31592f389fd50ce0750662d9c7138242f694a140eb4caefa795a5b7",
+    "production_dashboard.py": "e1d354a9a21ff7298dcfaab04bac1b9f19e33ba01d456b55245e29a057ff0472",
+    "production.py": "4831c5b6f489c317e5a7fae54ca2666355b6cdea3893cd45e410f2bdf3b17e38",
+    "abnormality.py": "8c796808016f79c4986816e2f809788b6b3e57f156d852816011aea656e7a11b",
+    "backend/data.py": "3fcfd78d84821d63c81928f50970d17958508276260663ee2ac56b62e0aac907",
+    "backend/runtime.py": "1b1f2e896fe393e02f5e5829349a5cec042718802389b42767f1608e5eb3614d",
+    "backend/models.py": "ef5aeda1647b23363bab5af5dc5ef4f3d0c05a3d976308c8be16f4abcdd894dc"
+  },
+  "python_version": "3.12.14",
+  "sqlite_version": "3.53.1",
+  "versions": {
+    "openai-agents": "0.24.0",
+    "openai": "3.37.0",
+    "pydantic": "2.14.1"
+  },
+  "pricing": {
+    "as_of": "2026-11-02",
+    "input_per_million": 2,
+    "output_per_million": 10,
+    "currency": "USD"
+  },
+  "design": {
+    "primary_questions": 20,
+    "variant_b_questions": 6,
+    "repetitions": 3,
+    "max_business_calls_per_trial": 1,
+    "max_model_calls_per_trial": 2
+  },
+  "explanation_method": "LLM selects evidence IDs; factual sentences and numerical tables are rendered locally, not unrestricted prose."
+}

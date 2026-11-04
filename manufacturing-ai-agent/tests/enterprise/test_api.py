@@ -77,11 +77,8 @@ def test_invalid_filters(client, params):
 def test_missing_single_shift_and_demo_are_distinct(client):
     real = client.get("/api/dashboard/summary", params={"shift": "Night"}).json()
     assert real["summary"]["input_rolls"] is None and real["records"] == []
-    demo = client.get("/api/dashboard/summary", params={"source": "demo"}).json()
-    assert demo["source"] == "demo" and all(
-        r["product"].startswith("SYNTHETIC") for r in demo["records"]
-    )
-    assert "SYNTHETIC" in demo["warnings"][0]
+    assert client.get("/api/dashboard/summary", params={"source": "demo"}).status_code == 422
+
 
 
 def test_capacity_rounding_yield_and_units(client):
@@ -339,10 +336,10 @@ def test_optional_fastmcp_shares_tools(client):
     assert capacity_scenario(480, 30, 2)["estimated_cycles"] == 32
 
 
-def test_inventory_is_always_labeled_demo(client):
+def test_inventory_has_no_synthetic_stock(client):
     data = client.get("/api/inventory", params={"planned_quantity": 3000}).json()
-    assert data["source"] == "synthetic_demo"
-    assert data["items"][0]["shortage_kg"] == 500
+    assert data["source"] == "unavailable" and data["items"] == []
+
 
 
 def test_zero_denominator_and_filtered_coverage(client, monkeypatch, tmp_path):
@@ -416,10 +413,8 @@ def test_report_downloads_keep_scope_and_source(client):
     text = " ".join(p.extract_text() for p in PdfReader(io.BytesIO(pdf.content)).pages)
     assert "2026-10-17" in text and "TEST-SPEC" in text and "PRIVATE" not in text
     demo = client.get("/api/reports/selection.pdf", params={"source": "demo"})
-    assert (
-        "SYNTHETIC DEMONSTRATION"
-        in PdfReader(io.BytesIO(demo.content)).pages[0].extract_text()
-    )
+    assert demo.status_code == 422
+
 
 
 def test_pdf_text_location_citation(client):

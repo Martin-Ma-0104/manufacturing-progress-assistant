@@ -19,11 +19,11 @@ reuses deterministic production and abnormality calculations in Python; browser
 code does not duplicate business math. Existing historical FX8 records remain
 available alongside FX1-FX7, while machines without records stay unconnected.
 
-- Filter by dates, machine, shift and product; reviewed history and synthetic
-  demonstrations are separate sources. Missing data is never filled with zero.
+- Filter reviewed actual production by dates, machine, shift and product.
+  Synthetic fixtures are reserved for offline tests; missing data is never filled with zero.
 - Use explicit minutes, cycle time, machine count, units and yield to compare
   capacity scenarios. These are assumptions, not measured plant capacity or a
-  validated optimal schedule. Inventory is an isolated synthetic example.
+  validated optimal schedule. Actual inventory is not connected; the current page has an empty state.
 - Upload text-based PDF, DOCX, TXT or Markdown to a separate Chroma knowledge
   index. Default local vectors are lexical hashes, not learned semantic models;
   answers quote relevant evidence with document and page/paragraph citations.
@@ -38,10 +38,10 @@ available alongside FX1-FX7, while machines without records stay unconnected.
 ### Current Dashboard behavior
 
 - Use calendar dates or 7-/30-day presets, with machine, shift, product and
-  historical/demo filters retained in the URL across refreshes.
+  reviewed-history filters retained in the URL across refreshes.
 - Review planned and actual input, input plan attainment, qualified output and
-  recorded abnormality minutes. Missing measured cycle time, utilization and
-  capacity are explicitly unavailable; scenario results are separate.
+  recorded abnormality minutes. Measured cycle time and capacity remain unavailable. Runtime/utilization
+  are labelled estimates under explicit shift/break assumptions; scenarios stay separate.
 - The full-width input chart uses a blue solid actual line and a slate dashed
   plan reference. Every non-null value, including an explicit zero, is labeled.
   Weekly labels identify Actual/Plan; longer ranges use colour-matched compact
@@ -59,14 +59,46 @@ available alongside FX1-FX7, while machines without records stay unconnected.
   **Machine performance records** also starts collapsed and retains every existing
   column and unavailable value. Collapsing tables does not hide chart points.
 - Compare actual and qualified output by machine and recorded abnormality minutes
-  by category. Export the current selection as PDF or HTML. No automatic machine
-  ranking, loss attribution or root-cause conclusion is generated.
+  by category. Export the current selection as PDF or HTML. The separate research
+  view ranks known recorded event-minutes; it does not infer bottlenecks, loss attribution or root causes.
 
 The latest Dashboard changes passed 14 layout tests, 13 existing production and
 Dashboard regressions, TypeScript checks and a production build. Server-rendered
 markup was checked with controlled chart props; browser pixel/layout and actual
 mouse/keyboard interaction acceptance remain pending. These checks do not
 establish hosted behavior or live-model answer quality.
+
+### Estimated runtime and utilization
+
+The Dashboard now shows **Estimated runtime** and **Estimated utilization** as
+ranges, separate from measured metrics. Each record-evidenced machine shift
+assumes 12 hours including 2 hours of flexible breaks: 10 hours of availability.
+Day is 08:00-20:00; Night is 20:00-next 08:00. Full assumed shifts are used,
+including the selected end date; these values are not elapsed runtime as of now.
+
+All recorded abnormalities are treated as complete stops for this estimate.
+Intervals are clipped to each clock shift and merged per machine, including
+overlaps across categories or original shift labels. Carry-in events beginning
+outside the selected dates are included when they intersect a selected window.
+Original event labels and reported event-minute totals remain unchanged.
+
+Because break times are unknown, the range allows breaks to overlap stops.
+For one shift with S merged stop minutes, runtime is between
+`max(0, 600 - S)` and `min(600, 720 - S)` minutes. Overall utilization divides
+summed runtime bounds by summed assumed availability, not averaged percentages.
+Multiple-machine totals use **machine-hours**. Displayed ranges round outwards.
+
+Only machine shifts evidenced by production records or intersecting events
+enter the sample; repeated products do not add shifts. Coverage and excluded
+unrecorded shifts appear under **Runtime estimate assumptions**. Unrecorded
+shifts do not establish a schedule; unrecorded stops cannot be deducted.
+Missing/contradictory event times block affected estimates. Empty scopes stay
+unavailable. Product filters do not allocate machine time to individual products.
+The synthetic demo never reads real records and lacks complete stop timestamps.
+
+Per-machine ranges are also in the collapsed performance table. Measured cycle
+time and measured utilization remain unavailable; this assumption-based feature
+does not establish OEE, real capacity, running status or causal production losses.
 
 From `manufacturing-ai-agent/`, set up **Python 3.12** and **Node 24**:
 
@@ -485,3 +517,106 @@ Implementation: `production_diagnostics.py`, `production_diagnostics_ui.py`,
 `planning_data_contracts.py`, and the existing bounded data/client/UI modules.
 Regression coverage includes `test_production_diagnostics.py` and
 `test_planning_data_contracts.py`, with mocked model calls and synthetic data.
+
+## Recorded rejected-film analysis
+
+Production Monitoring now includes **Quality analysis**: recorded rejected area
+(m²), detail-record and machine counts, area by machine, recorded defect labels,
+and a daily trend. It uses the existing date, machine, product and All/Day/Night
+filters, including 7-/30-day selections. Long trends scroll horizontally and
+connect recorded dates across gaps; absent dates are not zero-filled. Complete
+labels and exact area values remain available in the bar charts and folded tables.
+
+Quality entries live in the separate SQLite `slitting_rejects` table. They do not
+change production totals, area qualification, confirmed changeovers, event minutes,
+or runtime estimates. Filter options include quality-only dates and products:
+quality entries remain visible even when matching production is missing. A missing
+entry does not establish zero defects or complete shift coverage. No rejection
+rate, responsibility attribution, or automatic root-cause conclusion is calculated.
+
+The current reviewed input contract explicitly uses m². Its user-confirmed product
+ID convention is `S` + `YYMMDD` + `UA`/`UB` + remaining code: UA denotes Day, UB
+denotes Night, and both keep the encoded production date. This convention is not
+silently inferred for a different source. Rejected area is stored as integer
+micro-square-metres, preserving up to six decimal places; API totals are exact
+decimal strings. Display-chart coordinates use numeric conversions. Detail records
+are not assumed to equal rolls, and nominal width/length does not overwrite the
+supplied area.
+
+Each entry contributes area once to a recorded-defect category. Identical labels
+in both CCD and appearance fields count once; differing labels form a combined
+category. Original labels and suffixes, station, specification and coating tracing
+fields are retained. Coating identifiers support tracing only. Summary responses
+omit source notes and individual tracing IDs; details are fetched only when opened,
+100 at a time, with explicit Previous/Next controls and a total count.
+
+Read-only endpoints are `GET /api/production/quality` and
+`GET /api/production/quality/records` (the latter also accepts `offset` and a
+`limit` of 1–200). Both use the existing scope contract. Refresh reloads quality
+data without polling or resetting URL filters. AI tools have not been extended to
+query or transmit this dataset. The preserved Streamlit viewer and production
+PDF/HTML reports retain their previous content; they do not yet display quality.
+
+The import workflow remains reviewed source → local numeric JSON → SQLite; the
+website does not add an Excel-upload or manual-entry form. The importer uses the
+original product ID as a stable key. Identical business values are skipped even
+when the source filename changes; conflicting values reject the whole batch.
+Future evidence of reused IDs requires a reviewed key change, not automatic merging.
+Original source rows and confirmation notes remain local. Actual spreadsheets,
+production data, database copies and recovery files must not be committed.
+
+Quality has its own versioned recovery bundle, separate from legacy cloud bundles:
+
+```bash
+python slitting_quality.py --import-json /path/to/reviewed-quality.json
+python slitting_quality.py --export-json /path/to/quality-recovery.json
+```
+
+The schema is `slitting-quality-v1` with a `records` list. Imports require an
+existing database, create only the separate quality table/index transactionally,
+and never update production or abnormality records. The existing cloud importer
+does not accept this new bundle. Quality imports and recovery are currently local.
+
+Quality validation includes 27 synthetic import/API/recovery cases, within 111
+enterprise tests, plus 61 legacy data regressions and 14 input-trend layout tests.
+Local type checks and the production build passed. Independent numeric/API
+comparisons and controlled server rendering also passed. These checks do not
+establish browser pixel/layout or mouse/keyboard acceptance; visual acceptance
+remains pending. No live model call or cloud publication was part of this change.
+
+
+## Verified research analysis on the local website
+
+Open **AI Production Expert** (`http://127.0.0.1:3000/ai-expert`) and use
+**Verified production analysis** above the chat. The Dashboard also links here
+while retaining the current date range, machine and shift. Choose **Input
+comparison** or **Abnormality duration**; both use the same read-only SQLite
+snapshot and the frozen research tool functions. No model request is made.
+
+- Input comparison shows planned and actual **input mother rolls**, actual minus
+  plan, record-level shortfall, net period shortfall and excess. Grouped bars and
+  the table show machine values; missing observations remain unavailable.
+- Abnormality duration explicitly ranks **known recorded event-minutes**. Ties
+  share competition ranks, partial subtotals are labelled, and machines without
+  known duration remain unranked. Open, overlapping and incomplete records retain
+  their coverage notes. These totals are not net downtime or a performance score.
+- The shared global date/machine/shift filters and Refresh action update results.
+  Product filtering is unsupported by these two tools: clear it explicitly before
+  analysis. It is never silently ignored. Scope changes hide previous results.
+- `GET /api/research/analysis` exposes typed results. Both dates are required,
+  ranges are limited to 30 inclusive calendar dates, unknown/extra filters fail,
+  and no database path, SQL executor, write method or model setting is exposed.
+
+The existing production chat is available below. The research live-model
+benchmark remains separate and unexecuted; this local view does not enable paid
+GPT-6 requests. The current Streamlit cloud interface has not gained this new
+Next.js view. The local website still binds only to localhost.
+
+Web adapter validation: 18 synthetic tests cover exact agreement with both frozen
+tools, one transaction snapshot, empty results/explicit zeros, missing minutes,
+o model calls, read-only files and strict unsupported-filter rejection. Combined
+with existing research/backend/data/trend tests, **241 tests passed**. TypeScript
+checks and the Next.js production build passed. HTTP and service-side results do
+not establish browser pixel or interactive visual acceptance.
+
+See the [research methodology and frozen questions](manufacturing-ai-agent/research/harry_milestone/README.md).
